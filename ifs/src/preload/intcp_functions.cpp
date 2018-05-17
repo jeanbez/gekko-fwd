@@ -52,33 +52,60 @@ int open64(const char* path, int flags, ...) {
     return open(path, flags | O_LARGEFILE, mode);
 }
 
-FILE* fopen(const char* path, const char* mode) {
-    init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, mode);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            CTX->log()->error("{}() NOT SUPPORTED", __func__);
-            errno = ENOTSUP;
-            return nullptr;
-        }
-    }
-    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
+/******  FILE OPS  ******/
+
+inline int file_to_fd(const FILE* f){
+    assert(f != nullptr);
+    return *(reinterpret_cast<int*>(&f));
 }
 
-FILE* fopen64(const char* path, const char* mode) {
+inline FILE* fd_to_file(const int fd){
+    assert(fd >= 0);
+    return reinterpret_cast<FILE*>(fd);
+}
+
+FILE* fopen(const char* path, const char* fmode) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, mode);
+        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
         std::string rel_path(path);
         if (CTX->relativize_path(rel_path)) {
-            CTX->log()->error("{}() NOT SUPPORTED", __func__);
-            errno = ENOTSUP;
-            return nullptr;
+            int flags = 0;
+            std::string str_mode(fmode);
+            if(str_mode == "r") {
+                flags = O_RDONLY;
+            } else if(str_mode == "r+") {
+                flags = O_RDWR;
+            } else {
+                CTX->log()->error("{}() stream open flags NOT SUPPORTED: '{}'", __func__, str_mode);
+                errno = ENOTSUP;
+                return nullptr;
+            }
+            mode_t mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+            auto fd = adafs_open(rel_path, mode, flags);
+            if(fd == -1){
+                return nullptr;
+            } else {
+                return fd_to_file(fd);
+            }
         }
     }
-    return (reinterpret_cast<decltype(&fopen)>(libc_fopen64))(path, mode);
+    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, fmode);
 }
+
+FILE* fopen64(const char* path, const char* fmode) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return fopen(path, fmode);
+        }
+    }
+    return (reinterpret_cast<decltype(&fopen)>(libc_fopen64))(path, fmode);
+}
+
+/******  FILE OPS  ******/
 
 #undef creat
 
