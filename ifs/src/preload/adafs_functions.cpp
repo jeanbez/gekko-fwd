@@ -37,6 +37,19 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
 #endif
     }
 
+    if( flags & O_TRUNC ){
+        //TODO truncation leave chunks on the server side
+        if((flags & O_RDWR) || (flags & O_WRONLY)) {
+            long updated_size;
+            auto ret = rpc_send_update_metadentry_size(path.c_str(), 0, 0, false, updated_size);
+            if (ret != 0) {
+                CTX->log()->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
+                errno = EIO; 
+                return -1; // ERR
+            }
+        }
+    }
+
     // TODO the open flags should not be in the map just set the pos accordingly
     return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
 }
