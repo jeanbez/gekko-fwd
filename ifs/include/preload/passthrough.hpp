@@ -9,8 +9,8 @@
 extern void* libc;
 
 extern void* libc_open;
-extern void* libc_fopen; // XXX Does not work with streaming pointers. If used will block forever
-extern void* libc_fopen64; // XXX Does not work with streaming pointers. If used will block forever
+extern void* libc_fopen;
+extern void* libc_fopen64;
 
 extern void* libc_mkdir;
 extern void* libc_mkdirat;

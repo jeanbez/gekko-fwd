@@ -52,19 +52,33 @@ int open64(const char* path, int flags, ...) {
     return open(path, flags | O_LARGEFILE, mode);
 }
 
-//// TODO This function somehow always blocks forever if one puts anything between the paththru...
-//FILE* fopen(const char* path, const char* mode) {
-////    init_passthrough_if_needed();
-////    DAEMON_DEBUG(debug_fd, "fopen called with path %s\n", path);
-//    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
-//}
+FILE* fopen(const char* path, const char* mode) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, mode);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return nullptr;
+        }
+    }
+    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
+}
 
-//// TODO This function somehow always blocks forever if one puts anything between the paththru...
-//FILE* fopen64(const char* path, const char* mode) {
-////    init_passthrough_if_needed();
-////    DAEMON_DEBUG(debug_fd, "fopen64 called with path %s\n", path);
-//    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, mode);
-//}
+FILE* fopen64(const char* path, const char* mode) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, mode);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return nullptr;
+        }
+    }
+    return (reinterpret_cast<decltype(&fopen)>(libc_fopen64))(path, mode);
+}
 
 #undef creat
 

@@ -76,8 +76,8 @@ void init_passthrough_() {
     }
 
     libc_open = dlsym(libc, "open");
-//    libc_fopen = dlsym(libc, "fopen");
-//    libc_fopen64 = dlsym(libc, "fopen64");
+    libc_fopen = dlsym(libc, "fopen");
+    libc_fopen64 = dlsym(libc, "fopen64");
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");
 
