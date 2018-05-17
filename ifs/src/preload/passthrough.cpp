@@ -13,8 +13,16 @@ static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 void* libc;
 
 void* libc_open;
-void* libc_fopen; // XXX Does not work with streaming pointers. If used will block forever
-void* libc_fopen64; // XXX Does not work with streaming pointers. If used will block forever
+
+void* libc_fopen;
+void* libc_fopen64;
+void* libc_fread;
+void* libc_fwrite;
+void* libc_fclose;
+void* libc_clearerr;
+void* libc_feof;
+void* libc_ferror;
+void* libc_fileno;
 
 void* libc_mkdir;
 void* libc_mkdirat;
@@ -76,8 +84,17 @@ void init_passthrough_() {
     }
 
     libc_open = dlsym(libc, "open");
+
     libc_fopen = dlsym(libc, "fopen");
     libc_fopen64 = dlsym(libc, "fopen64");
+    libc_fread = dlsym(libc, "fread");
+    libc_fwrite = dlsym(libc, "fwrite");
+    libc_fclose = dlsym(libc, "fclose");
+    libc_clearerr = dlsym(libc, "clearerr");
+    libc_feof = dlsym(libc, "feof");
+    libc_ferror = dlsym(libc, "ferror");
+    libc_fileno = dlsym(libc, "fileno");
+
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");
 

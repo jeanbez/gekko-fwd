@@ -9,8 +9,16 @@
 extern void* libc;
 
 extern void* libc_open;
+
 extern void* libc_fopen;
 extern void* libc_fopen64;
+extern void* libc_fread;
+extern void* libc_fwrite;
+extern void* libc_fclose;
+extern void* libc_clearerr;
+extern void* libc_feof;
+extern void* libc_ferror;
+extern void* libc_fileno;
 
 extern void* libc_mkdir;
 extern void* libc_mkdirat;

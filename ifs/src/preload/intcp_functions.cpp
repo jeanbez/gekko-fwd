@@ -76,6 +76,8 @@ FILE* fopen(const char* path, const char* fmode) {
                 flags = O_RDONLY;
             } else if(str_mode == "r+") {
                 flags = O_RDWR;
+            } else if(str_mode == "w") {
+                flags = (O_WRONLY | O_CREAT | O_TRUNC);
             } else {
                 CTX->log()->error("{}() stream open flags NOT SUPPORTED: '{}'", __func__, str_mode);
                 errno = ENOTSUP;
@@ -102,7 +104,110 @@ FILE* fopen64(const char* path, const char* fmode) {
             return fopen(path, fmode);
         }
     }
-    return (reinterpret_cast<decltype(&fopen)>(libc_fopen64))(path, fmode);
+    return (reinterpret_cast<decltype(&fopen64)>(libc_fopen64))(path, fmode);
+}
+
+size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); //retrieve the current offset
+            auto ret = adafs_pread_ws(fd, ptr, size*nmemb, pos);
+            if (ret > 0) {
+                // Update offset in file descriptor in the file map
+                adafs_fd->pos(pos + ret);
+                return ret % size;
+            }
+            return ret;
+        }
+    }
+    return (reinterpret_cast<decltype(&fread)>(libc_fread))(ptr, size, nmemb, stream);
+}
+
+size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); //retrieve the current offset
+            auto ret = adafs_pwrite_ws(fd, ptr, size*nmemb, pos);
+            if (ret > 0) {
+                // Update offset in file descriptor in the file map
+                adafs_fd->pos(pos + ret);
+                return ret % size;
+            }
+            return ret;
+        }
+    }
+    return (reinterpret_cast<decltype(&fwrite)>(libc_fwrite))(ptr, size, nmemb, stream);
+}
+
+int fclose(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            // No call to the daemon is required
+            CTX->file_map()->remove(fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&fclose)>(libc_fclose))(stream);
+}
+
+int fileno(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            return fd;
+        }
+    }
+    return (reinterpret_cast<decltype(&fileno)>(libc_fileno))(stream);
+}
+
+void clearerr(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&clearerr)>(libc_clearerr))(stream);
+}
+
+int feof(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return (reinterpret_cast<decltype(&feof)>(libc_feof))(stream);
+}
+
+int ferror(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return (reinterpret_cast<decltype(&ferror)>(libc_ferror))(stream);
 }
 
 /******  FILE OPS  ******/
