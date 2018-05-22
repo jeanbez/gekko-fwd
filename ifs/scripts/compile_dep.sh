@@ -39,6 +39,16 @@ prepare_build_dir() {
     fi
     rm -rf $1/build/*
 }
+
+find_cmake() {
+    local CMAKE=`command -v cmake3 || command -v cmake`
+    if [ $? -ne 0 ]; then
+        >&2 echo "ERROR: could not find cmake"
+        exit 1
+    fi
+    echo ${CMAKE}
+}
+
 PATCH_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PATCH_DIR="${PATCH_DIR}/patches"
 CLUSTER=""
@@ -137,6 +147,8 @@ USE_BMI="-DNA_USE_BMI:BOOL=OFF"
 USE_CCI="-DNA_USE_CCI:BOOL=OFF"
 USE_OFI="-DNA_USE_OFI:BOOL=OFF"
 
+CMAKE=`find_cmake`
+
 echo "Source path = '$1'";
 echo "Install path = '$2'";
 
@@ -168,7 +180,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/gflags
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j${CORES}
     make install
     # compile zstd
@@ -176,7 +188,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/zstd/build/cmake
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j${CORES}
     make install
     echo "############################################################ Installing:  lz4"
@@ -188,7 +200,7 @@ if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}
     CURR=${SOURCE}/snappy
     prepare_build_dir ${CURR}
     cd ${CURR}/build
-    cmake -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${INSTALL} -DCMAKE_BUILD_TYPE:STRING=Release ..
     make -j${CORES}
     make install
 fi
@@ -271,7 +283,7 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch
 fi
 cd ${CURR}/build
-cmake -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
+$CMAKE -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
 -DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../
 make -j${CORES}
