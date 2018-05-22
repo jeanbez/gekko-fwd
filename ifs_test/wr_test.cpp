@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     string mountdir = "/tmp/mountdir";
     string p = mountdir + "/file";
     char buffIn[] = "oops.";
-    char *buffOut = new char[strlen(buffIn)];
+    char *buffOut = new char[strlen(buffIn) + 1 + 20 ];
     int fd;
     int ret;
     struct stat st;
@@ -94,6 +94,12 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    nr = read(fd, buffOut, 1);
+    if(nr != 0){
+        cerr << "Error reading at end of file" << endl;
+        return -1;
+    }
+
     if(strncmp( buffIn, buffOut, strlen(buffIn)) != 0){
         cerr << "File content mismatch" << endl;
         return -1;
@@ -105,6 +111,27 @@ int main(int argc, char* argv[]) {
         return -1;
     };
 
+    /* Read beyond end of file */
+
+    fd = open(p.c_str(), O_RDONLY);
+    if(fd < 0){
+        cerr << "Error opening file (read)" << endl;
+        return -1;
+    }
+
+    nr = read(fd, buffOut, strlen(buffIn) + 20 );
+    if(nr != strlen(buffIn)){
+        cerr << "Error reading file" << endl;
+        return -1;
+    }
+    
+    nr = read(fd, buffOut, 1 );
+    if(nr != 0){
+        cerr << "Error reading at end of file" << endl;
+        return -1;
+    }
+
+    /* Remove test file */
     ret = remove(p.c_str());
     if(ret != 0){
         cerr << "Error removing file: " << strerror(errno) << endl;
