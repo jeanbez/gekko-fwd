@@ -75,6 +75,8 @@ void* libc_closedir;
 
 void* libc_chdir;
 
+void* libc_realpath;
+
 
 void init_passthrough_() {
     libc = dlopen("libc.so.6", RTLD_LAZY);
@@ -145,6 +147,8 @@ void init_passthrough_() {
     libc_closedir = dlsym(libc, "closedir");
 
     libc_chdir = dlsym(libc, "chdir");
+
+    libc_realpath = dlsym(libc, "realpath");
 
 }
 

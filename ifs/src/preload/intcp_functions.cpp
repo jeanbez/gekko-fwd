@@ -728,3 +728,26 @@ int chdir(const char* path){
     }
     return (reinterpret_cast<decltype(&chdir)>(libc_chdir))(path);
 }
+
+char *realpath(const char *path, char *resolved_path) {
+    init_passthrough_if_needed();
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path(path);
+    if (CTX->relativize_path(rel_path)) {
+        if(resolved_path != nullptr) {
+            CTX->log()->error("{}() use of user level buffer not supported", __func__);
+            errno = ENOTSUP;
+            return nullptr;
+        }
+        auto absolute_path = CTX->mountdir() + rel_path;
+        auto ret_ptr = static_cast<char*>(malloc(absolute_path.size() +  1));
+        if(ret_ptr == nullptr){
+            CTX->log()->error("{}() failed to allocate buffer for called with path {}", __func__, path);
+            errno = ENOMEM;
+            return nullptr;
+        }
+        strcpy(ret_ptr, absolute_path.c_str());
+        return ret_ptr;
+    }
+    return (reinterpret_cast<decltype(&realpath)>(libc_realpath))(path, resolved_path);
+}
