@@ -530,7 +530,7 @@ ssize_t read(int fd, void* buf, size_t count) {
             auto ret = adafs_pread_ws(fd, buf, count, pos);
             // Update offset in file descriptor in the file map
             if (ret > 0) {
-                adafs_fd->pos(pos + count);
+                adafs_fd->pos(pos + ret);
             }
             return ret;
         }
