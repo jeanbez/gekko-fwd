@@ -12,8 +12,9 @@ std::string ChunkStorage::absolute(const std::string& internal_path) const {
     return root_path + '/' + internal_path;
 }
 
-ChunkStorage::ChunkStorage(const std::string& path) :
-    root_path(path)
+ChunkStorage::ChunkStorage(const std::string& path, const size_t chunksize) :
+    root_path(path),
+    chunksize(chunksize)
 {
     //TODO check path: absolute, exists, permission to write etc...
     assert(is_absolute_path(root_path));
@@ -57,6 +58,8 @@ void ChunkStorage::init_chunk_space(const std::string& file_path) const {
 void ChunkStorage::write_chunk(const std::string& file_path, unsigned int chunk_id,
         const char * buff, size_t size, off64_t offset, ABT_eventual& eventual) const {
 
+    assert((offset + size) <= chunksize);
+
     init_chunk_space(file_path);
 
     auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
@@ -85,7 +88,7 @@ void ChunkStorage::write_chunk(const std::string& file_path, unsigned int chunk_
 
 void ChunkStorage::read_chunk(const std::string& file_path, unsigned int chunk_id,
         char * buff, size_t size, off64_t offset, ABT_eventual& eventual) const {
-
+    assert((offset + size) <= chunksize);
     auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
     int fd = open(chunk_path.c_str(), O_RDONLY);
     if(fd < 0) {

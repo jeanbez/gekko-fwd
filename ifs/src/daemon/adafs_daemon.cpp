@@ -46,7 +46,7 @@ bool init_environment() {
     ADAFS_DATA->spdlogger()->debug("{}() Creating chunk storage directory: '{}'", __func__, chunk_storage_path);
     bfs::create_directories(chunk_storage_path);
     try {
-        ADAFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path));
+        ADAFS_DATA->storage(std::make_shared<ChunkStorage>(chunk_storage_path, CHUNKSIZE));
     } catch (const std::exception & e) {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize storage backend: {}", __func__, e.what());
     }
