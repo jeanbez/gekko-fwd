@@ -44,7 +44,7 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
             auto ret = rpc_send_update_metadentry_size(path.c_str(), 0, 0, false, updated_size);
             if (ret != 0) {
                 CTX->log()->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
-                errno = EIO; 
+                errno = EIO;
                 return -1; // ERR
             }
         }
