@@ -34,7 +34,7 @@ std::string ChunkStorage::get_chunks_dir(const std::string& file_path) {
 }
 
 std::string ChunkStorage::get_chunk_path(const std::string& file_path, unsigned int chunk_id) {
-    return get_chunks_dir(file_path) + std::to_string(chunk_id);
+    return get_chunks_dir(file_path) + '/' + std::to_string(chunk_id);
 }
 
 void ChunkStorage::destroy_chunk_space(const std::string& file_path) const {
@@ -48,7 +48,7 @@ void ChunkStorage::destroy_chunk_space(const std::string& file_path) const {
 
 void ChunkStorage::init_chunk_space(const std::string& file_path) const {
     auto chunk_dir = absolute(get_chunks_dir(file_path));
-    auto err = mkdir(chunk_dir.c_str(), 0640);
+    auto err = mkdir(chunk_dir.c_str(), 0750);
     if(err == -1 && errno != EEXIST){
         log->error("Failed to create chunk dir. Path: {}, Error: {}", chunk_dir, std::strerror(errno));
         throw std::system_error(errno, std::system_category(), "Failed to create chunk directory");
