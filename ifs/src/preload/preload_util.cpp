@@ -65,9 +65,10 @@ bool is_fs_path(const char* path) {
  */
 int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr) {
 
+    attr.st_ino = std::hash<std::string>{}(path);
+    
     auto pos = db_val.find(dentry_val_delim);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
-        attr.st_ino = std::hash<std::string>{}(path);
         attr.st_mode = static_cast<unsigned int>(stoul(db_val));
         attr.st_nlink = 1;
         attr.st_uid = CTX->fs_conf()->uid;
