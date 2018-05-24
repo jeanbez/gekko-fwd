@@ -107,7 +107,7 @@ FILE* fopen64(const char* path, const char* fmode) {
     return (reinterpret_cast<decltype(&fopen64)>(libc_fopen64))(path, fmode);
 }
 
-size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     init_passthrough_if_needed();
     if(CTX->initialized() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
@@ -127,7 +127,7 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return (reinterpret_cast<decltype(&fread)>(libc_fread))(ptr, size, nmemb, stream);
 }
 
-size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
     init_passthrough_if_needed();
     if(CTX->initialized() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
