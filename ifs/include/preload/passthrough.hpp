@@ -48,9 +48,12 @@ extern void* libc_puts;
 extern void* libc_write;
 extern void* libc_pwrite;
 extern void* libc_pwrite64;
+extern void* libc_writev;
+
 extern void* libc_read;
 extern void* libc_pread;
 extern void* libc_pread64;
+extern void* libc_readv;
 
 extern void* libc_lseek;
 extern void* libc_lseek64;

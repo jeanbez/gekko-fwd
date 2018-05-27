@@ -520,6 +520,53 @@ ssize_t pwrite64(int fd, const void* buf, size_t count, __off64_t offset) {
     return (reinterpret_cast<decltype(&pwrite64)>(libc_pwrite64))(fd, buf, count, offset);
 }
 
+ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); // retrieve the current offset
+            ssize_t written = 0;
+            ssize_t ret;
+            for (int i = 0; i < iovcnt; ++i){
+                auto buf = (iov+i)->iov_base;
+                auto count = (iov+i)->iov_len;
+                ret = adafs_pwrite_ws(fd, buf, count, pos);
+                if(ret == -1) {
+                    break;
+                }
+                written += ret;
+                pos += ret;
+
+                if(static_cast<size_t>(ret) < count){
+                    break;
+                }
+            }
+
+            if(written == 0){
+                return -1;
+            }
+            adafs_fd->pos(pos);
+            return written;
+        }
+    }
+    return (reinterpret_cast<decltype(&writev)>(libc_writev))(fd, iov, iovcnt);
+}
+
+ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return (reinterpret_cast<decltype(&readv)>(libc_readv))(fd, iov, iovcnt);
+}
+
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
