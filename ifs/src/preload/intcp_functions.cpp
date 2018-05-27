@@ -2,6 +2,8 @@
  * All intercepted functions are defined here
  */
 #include <sys/statfs.h>
+#include <sys/stat.h>
+#include <sys/uio.h>
 
 #include <preload/preload.hpp>
 #include <preload/passthrough.hpp>
@@ -400,6 +402,31 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
         }
     }
     return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
+}
+
+int __fxstatat(int ver, int dirfd, const char * path, struct stat * buf, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}'", __func__, path);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return adafs_stat(rel_path, buf);
+        }
+    }
+    return (reinterpret_cast<decltype(&__fxstatat)>(libc___fxstatat))(ver, dirfd, path, buf, flags);
+}
+
+int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path '{}'", __func__, path);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return adafs_stat64(rel_path, buf);
+        }
+    }
+    return (reinterpret_cast<decltype(&__fxstatat64)>(libc___fxstatat64))(ver, dirfd, path, buf, flags);
+
 }
 
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {

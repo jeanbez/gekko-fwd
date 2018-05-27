@@ -37,6 +37,8 @@ extern void* libc___xstat;
 extern void* libc___xstat64;
 extern void* libc___fxstat;
 extern void* libc___fxstat64;
+extern void* libc___fxstatat;
+extern void* libc___fxstatat64;
 extern void* libc___lxstat;
 extern void* libc___lxstat64;
 

@@ -41,6 +41,8 @@ void* libc___xstat;
 void* libc___xstat64;
 void* libc___fxstat;
 void* libc___fxstat64;
+void* libc___fxstatat;
+void* libc___fxstatat64;
 void* libc___lxstat;
 void* libc___lxstat64;
 
@@ -118,6 +120,8 @@ void init_passthrough_() {
     libc___xstat64 = dlsym(libc, "__xstat64");
     libc___fxstat = dlsym(libc, "__fxstat");
     libc___fxstat64 = dlsym(libc, "__fxstat64");
+    libc___fxstatat = dlsym(libc, "__fxstatat");
+    libc___fxstatat64 = dlsym(libc, "__fxstatat64");
     libc___lxstat = dlsym(libc, "__lxstat");
     libc___lxstat64 = dlsym(libc, "__lxstat64");
 
