@@ -26,12 +26,6 @@ int open(const char* path, int flags, ...) {
 
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with path {}", __func__, path);
-        if(flags & O_DIRECTORY){
-            CTX->log()->error("{}() called with `O_DIRECTORY` flag on {}", __func__, path);
-            errno = ENOTSUP;
-            return -1;
-        }
-
         std::string rel_path(path);
         if (CTX->relativize_path(rel_path)) {
             return adafs_open(rel_path, mode, flags);

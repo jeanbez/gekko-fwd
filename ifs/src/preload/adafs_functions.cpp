@@ -19,6 +19,12 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         return -1;
     }
 
+    if(flags & O_DIRECTORY){
+        CTX->log()->error("{}() `O_DIRECTORY` flag is not supported", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+
     if (flags & O_CREAT){
         // no access check required here. If one is using our FS they have the permissions.
         err = adafs_mk_node(path, mode | S_IFREG);
