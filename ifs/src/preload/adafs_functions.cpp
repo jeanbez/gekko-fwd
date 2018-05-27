@@ -13,6 +13,12 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
     init_ld_env_if_needed();
     int err = 0;
 
+    if(flags & O_PATH){
+        CTX->log()->error("{}() `O_PATH` flag is not supported", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+
     if (flags & O_CREAT){
         // no access check required here. If one is using our FS they have the permissions.
         err = adafs_mk_node(path, mode | S_IFREG);
