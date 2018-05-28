@@ -10,6 +10,7 @@
 #include <preload/adafs_functions.hpp>
 #include <preload/intcp_functions.hpp>
 #include <preload/open_dir.hpp>
+#include <global/path_util.hpp>
 
 
 using namespace std;
@@ -49,7 +50,7 @@ int open64(const char* path, int flags, ...) {
     return open(path, flags | O_LARGEFILE, mode);
 }
 
-int openat(int dirfd, const char *path, int flags, ...) {
+int openat(int dirfd, const char *cpath, int flags, ...) {
     init_passthrough_if_needed();
 
     mode_t mode = 0;
@@ -61,20 +62,34 @@ int openat(int dirfd, const char *path, int flags, ...) {
     }
 
     if(CTX->initialized()) {
+        std::string path(cpath);
         CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_open(rel_path, mode, flags);
-        }
+        
+        if(is_relative_path(path)) {
+            if(!(CTX->file_map()->exist(dirfd))) {
+                goto passthrough;
+            }
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_open(dir->path() + '/' + path, mode, flags);
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
 
-        if (CTX->file_map()->exist(dirfd)) {
-            CTX->log()->error("{}() called with relative path: NOT SUPPORTED", __func__);
-            errno = ENOTSUP;
-            return -1;
+            if (CTX->relativize_path(path)) {
+                return adafs_open(path, mode, flags);
+            }
         }
     }
-
-    return (reinterpret_cast<decltype(&openat)>(libc_openat))(dirfd, path, flags, mode);
+passthrough:
+    return (reinterpret_cast<decltype(&openat)>(libc_openat))(dirfd, cpath, flags, mode);
 }
 
 int openat64(int dirfd, const char *path, int flags, ...) {
@@ -441,16 +456,44 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
     return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
 }
 
-int __fxstatat(int ver, int dirfd, const char * path, struct stat * buf, int flags) {
+int __fxstatat(int ver, int dirfd, const char * cpath, struct stat * buf, int flags) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path '{}'", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat(rel_path, buf);
+        std::string path(cpath);
+        CTX->log()->trace("{}() called with path '{}' and fd {}", __func__, path, dirfd);
+        if(flags & AT_EMPTY_PATH) {
+            CTX->log()->error("{}() AT_EMPTY_PATH flag not supported", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+
+        if(is_relative_path(path)) {
+            if((dirfd == AT_FDCWD) || !CTX->file_map()->exist(dirfd)) {
+                goto passthrough;
+            }
+
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_stat(dir->path() + '/' + path, buf);
+
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (CTX->relativize_path(path)) {
+                return adafs_stat(path, buf);
+            }
         }
     }
-    return (reinterpret_cast<decltype(&__fxstatat)>(libc___fxstatat))(ver, dirfd, path, buf, flags);
+passthrough:
+    return (reinterpret_cast<decltype(&__fxstatat)>(libc___fxstatat))(ver, dirfd, cpath, buf, flags);
 }
 
 int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int flags) {

@@ -6,6 +6,10 @@
 #include <mutex>
 #include <memory>
 
+/* Forward declaration */
+class OpenDir;
+
+
 enum class OpenFile_flags {
     append = 0,
     creat,
@@ -66,10 +70,12 @@ public:
 
     std::shared_ptr<OpenFile> get(int fd);
 
+    std::shared_ptr<OpenDir> get_dir(int dirfd);
+
     bool exist(int fd);
 
     int add(std::shared_ptr<OpenFile>);
-    
+
     bool remove(int fd);
 
     int dup(int oldfd);
