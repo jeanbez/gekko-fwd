@@ -788,6 +788,19 @@ int fcntl(int fd, int cmd, ...) {
         CTX->log()->trace("{}() called with fd {}", __func__, fd);
         if (CTX->file_map()->exist(fd)) {
             switch(cmd) {
+                case F_DUPFD:
+                    CTX->log()->trace("{}() F_DUPFD on fd {}", __func__, fd);
+                    return adafs_dup(fd);
+                case F_DUPFD_CLOEXEC: {
+                    CTX->log()->trace("{}() F_DUPFD_CLOEXEC on fd {}", __func__, fd);
+                    auto ret = adafs_dup(fd);
+                    if(ret == -1) {
+                        return ret;
+                    }
+                    CTX->file_map()->get(fd)
+                        ->set_flag(OpenFile_flags::cloexec, true);
+                    return ret;
+                }
                 case F_GETFD:
                     CTX->log()->trace("{}() F_GETFD on fd {}", __func__, fd);
                     if(CTX->file_map()->get(fd)
@@ -800,7 +813,7 @@ int fcntl(int fd, int cmd, ...) {
                     va_start (ap, cmd);
                     int flags = va_arg (ap, int);
                     va_end (ap);
-                    CTX->log()->trace("{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}", __func__, fd, (flags & FD_CLOEXEC));
+                    CTX->log()->trace("{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}]", __func__, fd, (flags & FD_CLOEXEC));
                     CTX->file_map()->get(fd)
                         ->set_flag(OpenFile_flags::cloexec, (flags & FD_CLOEXEC));
                     return 0;
