@@ -13,6 +13,7 @@ static pthread_once_t init_lib_thread = PTHREAD_ONCE_INIT;
 void* libc;
 
 void* libc_open;
+void* libc_openat;
 
 void* libc_fopen;
 void* libc_fopen64;
@@ -91,6 +92,7 @@ void init_passthrough_() {
     }
 
     libc_open = dlsym(libc, "open");
+    libc_openat = dlsym(libc, "openat");
 
     libc_fopen = dlsym(libc, "fopen");
     libc_fopen64 = dlsym(libc, "fopen64");

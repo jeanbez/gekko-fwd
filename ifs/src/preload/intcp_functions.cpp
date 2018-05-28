@@ -48,6 +48,48 @@ int open64(const char* path, int flags, ...) {
     return open(path, flags | O_LARGEFILE, mode);
 }
 
+int openat(int dirfd, const char *path, int flags, ...) {
+    init_passthrough_if_needed();
+
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list vl;
+        va_start(vl, flags);
+        mode = static_cast<mode_t>(va_arg(vl, int));
+        va_end(vl);
+    }
+
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path {}", __func__, path);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return adafs_open(rel_path, mode, flags);
+        }
+
+        if (CTX->file_map()->exist(dirfd)) {
+            CTX->log()->error("{}() called with relative path: NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+
+    return (reinterpret_cast<decltype(&openat)>(libc_openat))(dirfd, path, flags, mode);
+}
+
+int openat64(int dirfd, const char *path, int flags, ...) {
+    init_passthrough_if_needed();
+
+    mode_t mode = 0;
+    if (flags & O_CREAT) {
+        va_list vl;
+        va_start(vl, flags);
+        mode = static_cast<mode_t>(va_arg(vl, int));
+        va_end(vl);
+    }
+
+    return openat(dirfd, path, flags | O_LARGEFILE, mode);
+}
+
 /******  FILE OPS  ******/
 
 inline int file_to_fd(const FILE* f){

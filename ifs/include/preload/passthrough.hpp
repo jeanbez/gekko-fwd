@@ -9,6 +9,7 @@
 extern void* libc;
 
 extern void* libc_open;
+extern void* libc_openat;
 
 extern void* libc_fopen;
 extern void* libc_fopen64;
