@@ -836,6 +836,24 @@ DIR* opendir(const char* path){
     return (reinterpret_cast<decltype(&opendir)>(libc_opendir))(path);
 }
 
+DIR* fdopendir(int fd){
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            auto open_file = CTX->file_map()->get(fd);
+            auto open_dir = static_pointer_cast<OpenDir>(open_file);
+            if(!open_dir){
+                //Cast did not succeeded: open_file is a regular file
+                errno = EBADF;
+                return nullptr;
+            }
+            return fd_to_dirp(fd);
+        }
+    }
+    return (reinterpret_cast<decltype(&fdopendir)>(libc_fdopendir))(fd);
+}
+
 struct dirent* intcp_readdir(DIR* dirp){
     init_passthrough_if_needed();
     if(CTX->initialized()) {
