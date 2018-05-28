@@ -9,6 +9,7 @@
 #include <sstream>
 #include <csignal>
 #include <random>
+#include <sys/sysmacros.h>
 
 using namespace std;
 
@@ -66,7 +67,8 @@ bool is_fs_path(const char* path) {
 int db_val_to_stat(const std::string path, std::string db_val, struct stat& attr) {
 
     attr.st_ino = std::hash<std::string>{}(path);
-    
+    attr.st_dev = makedev(0, 0);
+
     auto pos = db_val.find(dentry_val_delim);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
         attr.st_mode = static_cast<unsigned int>(stoul(db_val));
