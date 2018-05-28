@@ -19,19 +19,23 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         return -1;
     }
 
-    if(flags & O_DIRECTORY){
-        CTX->log()->error("{}() `O_DIRECTORY` flag is not supported", __func__);
-        errno = ENOTSUP;
-        return -1;
-    }
-
     if (flags & O_CREAT){
+        if(flags & O_DIRECTORY){
+            CTX->log()->error("{}() `O_CREAT` with `O_DIRECTORY` flag is not supported", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+
         // no access check required here. If one is using our FS they have the permissions.
         err = adafs_mk_node(path, mode | S_IFREG);
         if(err != 0)
             return -1;
 
     } else {
+        if(flags & O_DIRECTORY){
+            return adafs_opendir(path);
+        }
+
         auto mask = F_OK; // F_OK == 0
 #if defined(CHECK_ACCESS_DURING_OPEN)
         if ((mode & S_IRUSR) || (mode & S_IRGRP) || (mode & S_IROTH))
@@ -244,12 +248,19 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 
 int adafs_opendir(const std::string& path) {
     init_ld_env_if_needed();
-#if defined(DO_LOOKUP)
-    auto err = rpc_send_access(path, F_OK);
-    if(err != 0){
+    std::string attr;
+    auto err = rpc_send_stat(path, attr);
+    if (err != 0) {
+        CTX->log()->debug("{}() send stat failed", __func__);
         return err;
     }
-#endif
+    struct stat st;
+    db_val_to_stat(path, attr, st);
+    if(!(st.st_mode & S_IFDIR)) {
+        CTX->log()->debug("{}() path is not a directory", __func__);
+        errno = ENOTDIR;
+        return -1;
+    }
     auto open_dir = std::make_shared<OpenDir>(path);
     rpc_send_get_dirents(*open_dir);
     return CTX->file_map()->add(open_dir);
