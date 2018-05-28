@@ -66,6 +66,8 @@ extern void* libc_fdatasync;
 extern void* libc_truncate;
 extern void* libc_ftruncate;
 
+extern void* libc_fcntl;
+
 extern void* libc_dup;
 extern void* libc_dup2;
 extern void* libc_dup3;

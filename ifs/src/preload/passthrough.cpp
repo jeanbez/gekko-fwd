@@ -71,6 +71,8 @@ void* libc_fdatasync;
 void* libc_truncate;
 void* libc_ftruncate;
 
+void* libc_fcntl;
+
 void* libc_dup;
 void* libc_dup2;
 void* libc_dup3;
@@ -149,6 +151,8 @@ void init_passthrough_() {
 
     libc_truncate = dlsym(libc, "truncate");
     libc_ftruncate = dlsym(libc, "ftruncate");
+
+    libc_fcntl = dlsym(libc, "fcntl");
 
     libc_dup = dlsym(libc, "dup");
     libc_dup2 = dlsym(libc, "dup2");

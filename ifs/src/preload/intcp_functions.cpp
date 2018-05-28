@@ -9,6 +9,7 @@
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
 #include <preload/intcp_functions.hpp>
+#include <preload/open_dir.hpp>
 
 
 using namespace std;
@@ -729,6 +730,46 @@ int truncate(const char* path, off_t length) __THROW {
 int ftruncate(int fd, off_t length) __THROW {
     init_passthrough_if_needed();
     return (reinterpret_cast<decltype(&ftruncate)>(libc_ftruncate))(fd, length);
+}
+
+int fcntl(int fd, int cmd, ...) {
+    init_passthrough_if_needed();
+    va_list ap;
+    void *arg;
+
+    va_start (ap, cmd);
+    arg = va_arg (ap, void *);
+    va_end (ap);
+
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        if (CTX->file_map()->exist(fd)) {
+            switch(cmd) {
+                case F_GETFD:
+                    CTX->log()->trace("{}() F_GETFD on fd {}", __func__, fd);
+                    if(CTX->file_map()->get(fd)
+                            ->get_flag(OpenFile_flags::cloexec)) {
+                        return FD_CLOEXEC;
+                    } else {
+                        return 0;
+                    }
+                case F_SETFD: {
+                    va_start (ap, cmd);
+                    int flags = va_arg (ap, int);
+                    va_end (ap);
+                    CTX->log()->trace("{}() [fd: {}, cmd: F_SETFD, FD_CLOEXEC: {}", __func__, fd, (flags & FD_CLOEXEC));
+                    CTX->file_map()->get(fd)
+                        ->set_flag(OpenFile_flags::cloexec, (flags & FD_CLOEXEC));
+                    return 0;
+                }
+                default:
+                    CTX->log()->error("{}() unrecognized command {} on fd {}", __func__, cmd, fd);
+                    errno = ENOTSUP;
+                    return -1;
+            }
+        }
+    }
+    return (reinterpret_cast<decltype(&fcntl)>(libc_fcntl))(fd, cmd, arg);
 }
 
 int dup(int oldfd) __THROW {
