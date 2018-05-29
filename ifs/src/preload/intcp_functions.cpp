@@ -368,18 +368,37 @@ int access(const char* path, int mask) __THROW {
     return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
 }
 
-int faccessat(int dirfd, const char* path, int mode, int flags) __THROW {
+int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
+        std::string path(cpath);
         CTX->log()->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            // not implemented
-            CTX->log()->trace("{}() not implemented.", __func__);
-            return -1;
+
+        if(is_relative_path(path)) {
+            if(!(CTX->file_map()->exist(dirfd))) {
+                goto passthrough;
+            }
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_access(dir->path() + '/' + path, mode);
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (CTX->relativize_path(path)) {
+                return adafs_access(path, mode);
+            }
         }
     }
-    return (reinterpret_cast<decltype(&faccessat)>(libc_faccessat))(dirfd, path, mode, flags);
+passthrough:
+    return (reinterpret_cast<decltype(&faccessat)>(libc_faccessat))(dirfd, cpath, mode, flags);
 }
 
 
