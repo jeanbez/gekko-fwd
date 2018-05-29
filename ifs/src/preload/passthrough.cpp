@@ -24,6 +24,7 @@ void* libc_clearerr;
 void* libc_feof;
 void* libc_ferror;
 void* libc_fileno;
+void* libc_fflush;
 
 void* libc_mkdir;
 void* libc_mkdirat;
@@ -107,6 +108,7 @@ void init_passthrough_() {
     libc_feof = dlsym(libc, "feof");
     libc_ferror = dlsym(libc, "ferror");
     libc_fileno = dlsym(libc, "fileno");
+    libc_fflush = dlsym(libc, "fflush");
 
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");

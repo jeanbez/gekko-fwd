@@ -20,6 +20,7 @@ extern void* libc_clearerr;
 extern void* libc_feof;
 extern void* libc_ferror;
 extern void* libc_fileno;
+extern void* libc_fflush;
 
 extern void* libc_mkdir;
 extern void* libc_mkdirat;

@@ -265,6 +265,19 @@ int ferror(FILE *stream) {
     return (reinterpret_cast<decltype(&ferror)>(libc_ferror))(stream);
 }
 
+int fflush(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&fflush)>(libc_fflush))(stream);
+
+}
+
 /******  FILE OPS  ******/
 
 #undef creat
