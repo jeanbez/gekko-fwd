@@ -305,8 +305,8 @@ int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
         std::string rel_path(path);
         if (CTX->relativize_path(rel_path)) {
             // not implemented
-            CTX->log()->trace("{}() not implemented.", __func__);
-            errno = EBUSY;
+            CTX->log()->error("{}() not implemented.", __func__);
+            errno = ENOTSUP;
             return -1;
         }
     }
