@@ -40,8 +40,8 @@ void write_file_abt(void* _arg) {
                 arg->buf, arg->size, arg->off, arg->eventual);
     } catch (const std::exception& e){
         ADAFS_DATA->spdlogger()->error("{}() Error writing chunk {} of file {}", __func__, arg->chnk_id, path);
-        auto err = static_cast<size_t>(EIO);
-        ABT_eventual_set(arg->eventual, &err, sizeof(size_t));
+        auto wrote = 0;
+        ABT_eventual_set(arg->eventual, &wrote, sizeof(size_t));
     }
 
 }
@@ -77,8 +77,8 @@ void read_file_abt(void* _arg) {
                 arg->buf, arg->size, arg->off, arg->eventual);
     } catch (const std::exception& e){
         ADAFS_DATA->spdlogger()->error("{}() Error reading chunk {} of file {}", __func__, arg->chnk_id, path);
-        auto err = static_cast<size_t>(EIO);
-        ABT_eventual_set(arg->eventual, &err, sizeof(size_t));
+        size_t read = 0;
+        ABT_eventual_set(arg->eventual, &read, sizeof(size_t));
     }
 }
 
@@ -261,6 +261,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     /*
      * 4. Read task results and accumulate in out.io_size
      */
+    out.io_size = 0;
     for (chnk_id_curr = 0; chnk_id_curr < in.chunk_n; chnk_id_curr++) {
         size_t* task_written_size;
         // wait causes the calling ult to go into BLOCKED state, implicitly yielding to the pool scheduler
@@ -427,6 +428,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     /*
      * 4. Read task results and accumulate in out.io_size
      */
+    out.io_size = 0;
     for (chnk_id_curr = 0; chnk_id_curr < in.chunk_n; chnk_id_curr++) {
         size_t* task_read_size;
         // wait causes the calling ult to go into BLOCKED state, implicitly yielding to the pool scheduler
@@ -454,7 +456,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     }
 
     ADAFS_DATA->spdlogger()->debug("{}() total chunk size read {}/{}", __func__, out.io_size, in.total_chunk_size);
-    
+
     /*
      * 5. Respond and cleanup
      */
