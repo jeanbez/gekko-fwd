@@ -22,6 +22,9 @@ extern void* libc_ferror;
 extern void* libc_fileno;
 extern void* libc_fflush;
 
+extern void* libc_putc;
+extern void* libc_fputc;
+
 extern void* libc_mkdir;
 extern void* libc_mkdirat;
 extern void* libc_unlink;

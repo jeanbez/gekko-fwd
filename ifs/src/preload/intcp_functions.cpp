@@ -65,7 +65,7 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
     if(CTX->initialized()) {
         std::string path(cpath);
         CTX->log()->trace("{}() called with path {}", __func__, path);
-        
+
         if(is_relative_path(path)) {
             if(!(CTX->file_map()->exist(dirfd))) {
                 goto passthrough;
@@ -275,7 +275,32 @@ int fflush(FILE *stream) {
         }
     }
     return (reinterpret_cast<decltype(&fflush)>(libc_fflush))(stream);
+}
 
+int putc(int c, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return (reinterpret_cast<decltype(&putc)>(libc_putc))(c, stream);
+}
+
+int fputc(int c, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return (reinterpret_cast<decltype(&fputc)>(libc_fputc))(c, stream);
 }
 
 /******  FILE OPS  ******/

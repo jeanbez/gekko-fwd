@@ -26,6 +26,9 @@ void* libc_ferror;
 void* libc_fileno;
 void* libc_fflush;
 
+void* libc_putc;
+void* libc_fputc;
+
 void* libc_mkdir;
 void* libc_mkdirat;
 void* libc_unlink;
@@ -109,6 +112,9 @@ void init_passthrough_() {
     libc_ferror = dlsym(libc, "ferror");
     libc_fileno = dlsym(libc, "fileno");
     libc_fflush = dlsym(libc, "fflush");
+
+    libc_putc = dlsym(libc, "putc");
+    libc_fputc = dlsym(libc, "fputc");
 
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");
