@@ -4,6 +4,7 @@
 #include <sys/statfs.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
+#include <sys/unistd.h>
 
 #include <preload/preload.hpp>
 #include <preload/passthrough.hpp>
@@ -324,6 +325,45 @@ int unlink(const char* path) __THROW {
         }
     }
     return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
+}
+
+int unlinkat(int dirfd, const char *cpath, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        std::string path(cpath);
+        CTX->log()->trace("{}() called with path {}, dirfd {}, flags {}", __func__, path, dirfd, flags);
+
+        if(flags & AT_REMOVEDIR) {
+            CTX->log()->error("{}() AT_REMOVEDIR flag is not supported", __func__);
+            errno = ENOTDIR;
+            return -1;
+        }
+
+        if(is_relative_path(path)) {
+            if(!(CTX->file_map()->exist(dirfd))) {
+                goto passthrough;
+            }
+            auto dir = CTX->file_map()->get_dir(dirfd);
+            if(dir == nullptr) {
+                CTX->log()->error("{}() dirfd is not a directory ", __func__);
+                errno = ENOTDIR;
+                return -1;
+            }
+            if(has_trailing_slash(path)){
+                path.pop_back();
+            }
+            return adafs_rm_node(dir->path() + '/' + path);
+        } else {
+            // Path is absolute
+            assert(is_absolute_path(path));
+
+            if (CTX->relativize_path(path)) {
+                return adafs_rm_node(path);
+            }
+        }
+    }
+passthrough:
+    return (reinterpret_cast<decltype(&unlinkat)>(libc_unlinkat))(dirfd, cpath, flags);
 }
 
 int rmdir(const char* path) __THROW {

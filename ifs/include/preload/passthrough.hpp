@@ -24,6 +24,7 @@ extern void* libc_fileno;
 extern void* libc_mkdir;
 extern void* libc_mkdirat;
 extern void* libc_unlink;
+extern void* libc_unlinkat;
 extern void* libc_rmdir;
 
 extern void* libc_close;

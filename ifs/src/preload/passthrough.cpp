@@ -28,6 +28,7 @@ void* libc_fileno;
 void* libc_mkdir;
 void* libc_mkdirat;
 void* libc_unlink;
+void* libc_unlinkat;
 void* libc_rmdir;
 
 void* libc_close;
@@ -111,6 +112,7 @@ void init_passthrough_() {
     libc_mkdirat = dlsym(libc, "mkdirat");
 
     libc_unlink = dlsym(libc, "unlink");
+    libc_unlinkat = dlsym(libc, "unlinkat");
     libc_rmdir = dlsym(libc, "rmdir");
 
     libc_close = dlsym(libc, "close");
