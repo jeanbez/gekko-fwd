@@ -21,6 +21,13 @@ extern void* libc_feof;
 extern void* libc_ferror;
 extern void* libc_fileno;
 extern void* libc_fflush;
+extern void* libc_fpurge;
+extern void* libc___fpurge;
+
+extern void* libc_setbuf;
+extern void* libc_setbuffer;
+extern void* libc_setlinebuf;
+extern void* libc_setvbuf;
 
 extern void* libc_putc;
 extern void* libc_fputc;

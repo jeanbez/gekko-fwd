@@ -277,6 +277,78 @@ int fflush(FILE *stream) {
     return (reinterpret_cast<decltype(&fflush)>(libc_fflush))(stream);
 }
 
+int fpurge(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&fpurge)>(libc_fpurge))(stream);
+}
+
+void __fpurge(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&__fpurge)>(libc___fpurge))(stream);
+}
+
+void setbuf(FILE *stream, char *buf) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&setbuf)>(libc_setbuf))(stream, buf);
+}
+
+void setbuffer(FILE *stream, char *buf, size_t size) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&setbuffer)>(libc_setbuffer))(stream, buf, size);
+}
+
+void setlinebuf(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return;
+        }
+    }
+    return (reinterpret_cast<decltype(&setlinebuf)>(libc_setlinebuf))(stream);
+}
+
+int setvbuf(FILE *stream, char *buf, int mode, size_t size) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called on fd {}", __func__, fd);
+            return 0;
+        }
+    }
+    return (reinterpret_cast<decltype(&setvbuf)>(libc_setvbuf))(stream, buf, mode, size);
+}
+
 int putc(int c, FILE *stream) {
     init_passthrough_if_needed();
     if(CTX->initialized() && (stream != nullptr)) {

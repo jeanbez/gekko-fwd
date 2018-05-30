@@ -25,6 +25,13 @@ void* libc_feof;
 void* libc_ferror;
 void* libc_fileno;
 void* libc_fflush;
+void* libc_fpurge;
+void* libc___fpurge;
+
+void* libc_setbuf;
+void* libc_setbuffer;
+void* libc_setlinebuf;
+void* libc_setvbuf;
 
 void* libc_putc;
 void* libc_fputc;
@@ -112,6 +119,13 @@ void init_passthrough_() {
     libc_ferror = dlsym(libc, "ferror");
     libc_fileno = dlsym(libc, "fileno");
     libc_fflush = dlsym(libc, "fflush");
+    libc_fpurge = dlsym(libc, "fpurge");
+    libc___fpurge = dlsym(libc, "__fpurge");
+
+    libc_setbuf = dlsym(libc, "setbuf");
+    libc_setbuffer = dlsym(libc, "setbuffer");
+    libc_setlinebuf = dlsym(libc, "setlinebuf");
+    libc_setvbuf = dlsym(libc, "setvbuf");
 
     libc_putc = dlsym(libc, "putc");
     libc_fputc = dlsym(libc, "fputc");
