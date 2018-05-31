@@ -750,10 +750,6 @@ int fstatfs(int fd, struct statfs* buf) {
     return (reinterpret_cast<decltype(&fstatfs)>(libc_fstatfs))(fd, buf);
 }
 
-int puts(const char* str) {
-    return (reinterpret_cast<decltype(&puts)>(libc_puts))(str);
-}
-
 ssize_t write(int fd, const void* buf, size_t count) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
