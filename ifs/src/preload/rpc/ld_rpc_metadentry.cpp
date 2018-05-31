@@ -148,7 +148,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
     // Get response
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
-        CTX->log()->warn("{}() timed out");
+        CTX->log()->error("{}() timed out");
         margo_destroy(handle);
         return -1;
     }
