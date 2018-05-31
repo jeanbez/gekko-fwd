@@ -2,6 +2,7 @@
 #define IFS_CHUNK_STORAGE_HPP
 
 #include <abt.h>
+#include <limits.h>
 #include <string>
 #include <memory>
 
@@ -32,6 +33,10 @@ class ChunkStorage {
         void read_chunk(const std::string& file_path, unsigned int chunk_id,
                          char * buff, size_t size, off64_t offset,
                          ABT_eventual& eventual) const;
+        void trim_chunk_space(const std::string& file_path, unsigned int chunk_start,
+                unsigned int chunk_end = UINT_MAX);
+        void delete_chunk(const std::string& file_path, unsigned int chunk_id);
+        void truncate_chunk(const std::string& file_path, unsigned int chunk_id, off_t length);
         void destroy_chunk_space(const std::string& file_path) const;
 };
 

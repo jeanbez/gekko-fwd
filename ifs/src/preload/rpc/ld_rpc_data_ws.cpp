@@ -5,6 +5,8 @@
 #include <global/rpc/distributor.hpp>
 #include <global/chunk_calc_util.hpp>
 
+#include <unordered_set>
+
 using namespace std;
 
 // TODO If we decide to keep this functionality with one segment, the function can be merged mostly.
@@ -246,4 +248,85 @@ ssize_t rpc_send_read(const string& path, void* buf, const off64_t offset, const
     margo_bulk_free(rpc_bulk_handle);
     margo_bulk_free(ipc_bulk_handle);
     return (err < 0) ? err : out_size;
+}
+
+int rpc_send_trunc_data(const std::string& path, size_t current_size, size_t new_size) {
+    assert(current_size > new_size);
+    hg_return_t ret;
+    rpc_trunc_in_t in;
+    in.path = path.c_str();
+    in.length = new_size;
+
+    bool error = false;
+
+    // Find out which data server needs to delete chunks in order to contact only them
+    const unsigned int chunk_start = chnk_id_for_offset(new_size, CHUNKSIZE);
+    const unsigned int chunk_end = chnk_id_for_offset(current_size - new_size - 1, CHUNKSIZE);
+    std::unordered_set<unsigned int> hosts;
+    for(unsigned int chunk_id = chunk_start; chunk_id <= chunk_end; ++chunk_id) {
+        hosts.insert(CTX->distributor()->locate_data(path, chunk_id));
+    }
+
+    std::vector<hg_handle_t> rpc_handles(hosts.size());
+    std::vector<margo_request> rpc_waiters(hosts.size());
+    unsigned int req_num = 0;
+    for (const auto& host: hosts) {
+        ret = margo_create_wrap(ipc_trunc_data_id, rpc_trunc_data_id, host, rpc_handles[req_num], false);
+        if (ret != HG_SUCCESS) {
+            CTX->log()->error("{}() Unable to create Mercury handle for host: ", __func__, host);
+            break;
+        }
+
+        // send async rpc
+        ret = margo_iforward(rpc_handles[req_num], &in, &rpc_waiters[req_num]);
+        if (ret != HG_SUCCESS) {
+            CTX->log()->error("{}() Failed to send request to host: {}", __func__, host);
+            break;
+        }
+        ++req_num;
+    }
+
+    if(req_num < hosts.size()) {
+        // An error occurred. Cleanup and return
+        CTX->log()->error("{}() Error -> sent only some requests {}/{}. Cancelling request...", __func__, req_num, hosts.size());
+        for(unsigned int i = 0; i < req_num; ++i) {
+            margo_destroy(rpc_handles[i]);
+        }
+        errno = EIO;
+        return -1;
+    }
+
+    assert(req_num == hosts.size());
+    // Wait for RPC responses and then get response
+    rpc_err_out_t out{};
+    for (unsigned int i = 0; i < hosts.size(); ++i) {
+        ret = margo_wait(rpc_waiters[i]);
+        if (ret == HG_SUCCESS) {
+            ret = margo_get_output(rpc_handles[i], &out);
+            if (ret == HG_SUCCESS) {
+                if(out.err){
+                    CTX->log()->error("{}() received error response: {}", __func__, out.err);
+                    error = true;
+                }
+            } else {
+                // Get output failed
+                CTX->log()->error("{}() while getting rpc output", __func__);
+                error = true;
+            }
+        } else {
+            // Wait failed
+            CTX->log()->error("{}() Failed while waiting for response", __func__);
+            error = true;
+        }
+
+        /* clean up resources consumed by this rpc */
+        margo_free_output(rpc_handles[i], &out);
+        margo_destroy(rpc_handles[i]);
+    }
+
+    if(error) {
+        errno = EIO;
+        return -1;
+    }
+    return 0;
 }

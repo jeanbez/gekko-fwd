@@ -215,6 +215,52 @@ off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
     return adafs_fd->pos();
 }
 
+int adafs_truncate(const std::string& path, off_t old_size, off_t new_size) {
+    assert(new_size >= 0);
+    assert(new_size < old_size);
+
+    if (rpc_send_decr_size(path, new_size)) {
+        CTX->log()->debug("{}() failed to decrease size", __func__);
+        return -1;
+    }
+
+    if(rpc_send_trunc_data(path, old_size, new_size)){
+        CTX->log()->debug("{}() failed to truncate data", __func__);
+        return -1;
+    }
+    return 0;
+}
+
+int adafs_truncate(const std::string& path, off_t length) {
+    /* TODO CONCURRENCY:
+     * At the moment we first ask the length to the metadata-server in order to
+     * know which data-server have data to be deleted.
+     *
+     * From the moment we issue the adafs_stat and the moment we issue the
+     * adafs_trunc_data, some more data could have been added to the file and the
+     * length increased.
+     */
+    init_ld_env_if_needed();
+    if(length < 0) {
+        CTX->log()->debug("{}() length is negative: {}", __func__, length);
+        errno = EINVAL;
+        return -1;
+    }
+
+    struct stat st;
+    if(adafs_stat(path, &st)) {
+        return -1;
+    }
+
+    if(length > st.st_size) {
+        CTX->log()->debug("{}() length is greater then file size: {} > {}",
+               __func__, length, st.st_size);
+        errno = EINVAL;
+        return -1;
+    }
+    return adafs_truncate(path, st.st_size, length);
+}
+
 int adafs_dup(const int oldfd) {
     return CTX->file_map()->dup(oldfd);
 }

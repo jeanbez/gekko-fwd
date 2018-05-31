@@ -55,6 +55,48 @@ void ChunkStorage::init_chunk_space(const std::string& file_path) const {
     }
 }
 
+/* Delete all chunks stored on this node that falls in the gap [chunk_start, chunk_end]
+ *
+ * This is pretty slow method because it cycle over all the chunks sapce for this file.
+ */
+void ChunkStorage::trim_chunk_space(const std::string& file_path,
+        unsigned int chunk_start, unsigned int chunk_end) {
+
+    auto chunk_dir = absolute(get_chunks_dir(file_path));
+    const bfs::directory_iterator end;
+
+    for (bfs::directory_iterator chunk_file(chunk_dir); chunk_file != end; ++chunk_file) {
+        auto chunk_path = chunk_file->path();
+        auto chunk_id = std::stoul(chunk_path.filename().c_str());
+        if(chunk_id >= chunk_start && chunk_id <= chunk_end) {
+            int ret = unlink(chunk_path.c_str());
+            if(ret == -1) {
+                log->error("Failed to remove chunk file. File: {}, Error: {}", chunk_path.native(), std::strerror(errno));
+                throw std::system_error(errno, std::system_category(), "Failed to remove chunk file");
+            }
+        }
+    }
+}
+
+void ChunkStorage::delete_chunk(const std::string& file_path, unsigned int chunk_id) {
+    auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
+    int ret = unlink(chunk_path.c_str());
+    if(ret == -1) {
+        log->error("Failed to remove chunk file. File: {}, Error: {}", chunk_path, std::strerror(errno));
+        throw std::system_error(errno, std::system_category(), "Failed to remove chunk file");
+    }
+}
+
+void ChunkStorage::truncate_chunk(const std::string& file_path, unsigned int chunk_id, off_t length) {
+    auto chunk_path = absolute(get_chunk_path(file_path, chunk_id));
+    assert(length > 0 && (unsigned int)length <= chunksize);
+    int ret = truncate(chunk_path.c_str(), length);
+    if(ret == -1) {
+        log->error("Failed to truncate chunk file. File: {}, Error: {}", chunk_path, std::strerror(errno));
+        throw std::system_error(errno, std::system_category(), "Failed to truncate chunk file");
+    }
+}
+
 void ChunkStorage::write_chunk(const std::string& file_path, unsigned int chunk_id,
         const char * buff, size_t size, off64_t offset, ABT_eventual& eventual) const {
 

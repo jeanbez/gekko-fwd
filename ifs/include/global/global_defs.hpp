@@ -11,12 +11,14 @@ namespace hg_tag {
     constexpr auto access = "rpc_srv_access";
     constexpr auto stat = "rpc_srv_stat";
     constexpr auto remove = "rpc_srv_rm_node";
+    constexpr auto decr_size = "rpc_srv_decr_size";
     constexpr auto update_metadentry = "rpc_srv_update_metadentry";
     constexpr auto get_metadentry_size = "rpc_srv_get_metadentry_size";
     constexpr auto update_metadentry_size = "rpc_srv_update_metadentry_size";
     constexpr auto get_dirents = "rpc_srv_get_dirents";
     constexpr auto write_data = "rpc_srv_write_data";
     constexpr auto read_data = "rpc_srv_read_data";
+    constexpr auto trunc_data = "rpc_srv_trunc_data";
 }
 
 // typedefs

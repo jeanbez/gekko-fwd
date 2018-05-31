@@ -177,6 +177,58 @@ int rpc_send_stat(const std::string& path, string& attr) {
     return err;
 }
 
+int rpc_send_decr_size(const std::string& path, size_t length) {
+    hg_handle_t handle;
+    rpc_trunc_in_t in{};
+    int err = 0;
+    in.path = path.c_str();
+    in.length = length;
+
+    CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
+    auto ret = margo_create_wrap(ipc_decr_size_id, rpc_decr_size_id, path, handle, false);
+    if (ret != HG_SUCCESS) {
+        errno = EBUSY;
+        return -1;
+    }
+
+    // Send rpc
+#if defined(MARGO_FORWARD_TIMER)
+    ret = margo_forward_timed_wrap_timer(handle, &in, __func__);
+#else
+    ret = margo_forward_timed_wrap(handle, &in);
+#endif
+    // Get response
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() timed out", __func__);
+        margo_destroy(handle);
+        errno = EBUSY;
+        return -1;
+    }
+
+    rpc_err_out_t out{};
+    ret = margo_get_output(handle, &out);
+    if (ret != HG_SUCCESS) {
+        CTX->log()->error("{}() while getting rpc output", __func__);
+        margo_free_output(handle, &out);
+        margo_destroy(handle);
+        errno = EBUSY;
+        return -1;
+    }
+
+    CTX->log()->debug("{}() Got response: {}", __func__, out.err);
+
+    if(out.err != 0){
+        //In case of error out.err contains the
+        //corresponding value of errno
+        errno = out.err;
+        err = -1;
+    }
+
+    margo_free_output(handle, &out);
+    margo_destroy(handle);
+    return err;
+}
+
 int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only) {
     hg_return_t ret;
     int err = 0; // assume we succeed

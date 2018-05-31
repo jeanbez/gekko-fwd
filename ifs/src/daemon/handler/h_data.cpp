@@ -3,6 +3,7 @@
 #include <daemon/handler/rpc_defs.hpp>
 #include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
+#include <global/chunk_calc_util.hpp>
 #include <daemon/adafs_daemon.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
 
@@ -469,3 +470,37 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_read_data)
+
+static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
+    rpc_trunc_in_t in{};
+    rpc_err_out_t out{};
+
+    auto ret = margo_get_input(handle, &in);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Could not get RPC input data with err {}", __func__, ret);
+        throw runtime_error("Failed to get RPC input data");
+    }
+
+    unsigned int chunk_start = chnk_id_for_offset(in.length, CHUNKSIZE);
+
+    // If we trunc in the the middle of a chunk, do not delete that chunk
+    auto left_pad = chnk_lpad(in.length, CHUNKSIZE);
+    if(left_pad != 0) {
+        ADAFS_DATA->storage()->truncate_chunk(in.path, chunk_start, left_pad);
+        ++chunk_start;
+    }
+
+    ADAFS_DATA->storage()->trim_chunk_space(in.path, chunk_start);
+
+    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
+    auto hret = margo_respond(handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
+    }
+    // Destroy handle when finished
+    margo_free_input(handle, &in);
+    margo_destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_trunc_data)

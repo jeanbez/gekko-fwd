@@ -58,6 +58,26 @@ std::string IncreaseSizeOperand::serialize_params() const {
 }
 
 
+DecreaseSizeOperand::DecreaseSizeOperand(const size_t size) :
+    size(size) {}
+
+DecreaseSizeOperand::DecreaseSizeOperand(const rdb::Slice& serialized_op){
+    //Parse size
+    size_t read = 0;
+    size = std::stoul(serialized_op.data(), &read);
+    //check that we consumed all the input string
+    assert(read == serialized_op.size());
+}
+
+const OperandID DecreaseSizeOperand::id() const {
+    return OperandID::decrease_size;
+}
+
+std::string DecreaseSizeOperand::serialize_params() const {
+    return std::to_string(size);
+}
+
+
 CreateOperand::CreateOperand(const std::string& metadata): metadata(metadata) {}
 
 const OperandID CreateOperand::id() const{
@@ -108,6 +128,10 @@ bool MetadataMergeOperator::FullMergeV2(
             } else {
                 fsize = std::max(op.size, fsize);
             }
+        } else if(operand_id == OperandID::decrease_size) {
+            auto op = DecreaseSizeOperand(parameters);
+            assert(op.size < fsize); // we assume no concurrency here
+            fsize = op.size;
         } else if(operand_id == OperandID::create){
             continue;
         } else {

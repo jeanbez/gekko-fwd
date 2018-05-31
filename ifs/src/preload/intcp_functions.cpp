@@ -930,13 +930,28 @@ int fdatasync(int fd) {
     return (reinterpret_cast<decltype(&fdatasync)>(libc_fdatasync))(fd);
 }
 
-int truncate(const char* path, off_t length) __THROW {
+int truncate(const char* path, off_t length) {
     init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called with path: {}, offset: {}", __func__,
+                path, length);
+        std::string rel_path(path);
+        if (CTX->relativize_path(rel_path)) {
+            return adafs_truncate(rel_path, length);
+        }
+    }
     return (reinterpret_cast<decltype(&truncate)>(libc_truncate))(path, length);
 }
 
-int ftruncate(int fd, off_t length) __THROW {
+int ftruncate(int fd, off_t length) {
     init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called  [fd: {}, offset: {}]", __func__, fd, length);
+        if (CTX->file_map()->exist(fd)) {
+            auto path = CTX->file_map()->get(fd)->path();
+            return adafs_truncate(path, length);
+        }
+    }
     return (reinterpret_cast<decltype(&ftruncate)>(libc_ftruncate))(fd, length);
 }
 

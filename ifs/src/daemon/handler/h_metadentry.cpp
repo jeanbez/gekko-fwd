@@ -129,6 +129,41 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_stat)
 
+static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
+    rpc_trunc_in_t in{};
+    rpc_err_out_t out{};
+
+    auto ret = margo_get_input(handle, &in);
+    if (ret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
+        throw runtime_error("Failed to retrieve input from handle");
+    }
+
+    ADAFS_DATA->spdlogger()->debug("Serving decrement size RPC with path: '{}', length: {}",
+            in.path, in.length);
+
+    try {
+        ADAFS_DATA->mdb()->decrease_size(in.path, in.length);
+        out.err = 0;
+    } catch (const std::exception& e) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to decrease size: {}", __func__, e.what());
+        out.err = EIO;
+    }
+
+    ADAFS_DATA->spdlogger()->debug("{}() Sending output {}", __func__, out.err);
+    auto hret = margo_respond(handle, &out);
+    if (hret != HG_SUCCESS) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
+        throw runtime_error("Failed to respond");
+    }
+    // Destroy handle when finished
+    margo_free_input(handle, &in);
+    margo_destroy(handle);
+    return HG_SUCCESS;
+}
+
+DEFINE_MARGO_RPC_HANDLER(rpc_srv_decr_size)
+
 static hg_return_t rpc_srv_rm_node(hg_handle_t handle) {
     rpc_rm_node_in_t in{};
     rpc_err_out_t out{};

@@ -8,7 +8,8 @@
 namespace rdb = rocksdb;
 
 enum class OperandID: char {
-    increase_size = 's',
+    increase_size = 'i',
+    decrease_size = 'd',
     create = 'c'
 };
 
@@ -36,6 +37,17 @@ class IncreaseSizeOperand: public MergeOperand {
 
         IncreaseSizeOperand(const size_t size, const bool append);
         IncreaseSizeOperand(const rdb::Slice& serialized_op);
+
+        const OperandID id() const override;
+        std::string serialize_params() const override;
+};
+
+class DecreaseSizeOperand: public MergeOperand {
+    public:
+        size_t size;
+
+        DecreaseSizeOperand(const size_t size);
+        DecreaseSizeOperand(const rdb::Slice& serialized_op);
 
         const OperandID id() const override;
         std::string serialize_params() const override;

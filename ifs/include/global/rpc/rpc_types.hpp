@@ -31,6 +31,10 @@ MERCURY_GEN_PROC(rpc_stat_out_t, ((hg_int32_t) (err))
 
 MERCURY_GEN_PROC(rpc_rm_node_in_t, ((hg_const_string_t) (path)))
 
+MERCURY_GEN_PROC(rpc_trunc_in_t,
+                 ((hg_const_string_t) (path)) \
+                 ((hg_uint64_t)       (length)))
+
 MERCURY_GEN_PROC(rpc_update_metadentry_in_t,
                  ((hg_const_string_t) (path))\
 ((uint64_t) (nlink))\

@@ -93,8 +93,16 @@ void MetadataDB::update(const std::string& old_key, const std::string& new_key, 
     }
 }
 
-void MetadataDB::update_size(const std::string& key, size_t size, bool append){
+void MetadataDB::increase_size(const std::string& key, size_t size, bool append){
     auto uop = IncreaseSizeOperand(size, append);
+    auto s = db->Merge(write_opts, key, uop.serialize());
+    if(!s.ok()){
+        MetadataDB::throw_rdb_status_excpt(s);
+    }
+}
+
+void MetadataDB::decrease_size(const std::string& key, size_t size) {
+    auto uop = DecreaseSizeOperand(size);
     auto s = db->Merge(write_opts, key, uop.serialize());
     if(!s.ok()){
         MetadataDB::throw_rdb_status_excpt(s);

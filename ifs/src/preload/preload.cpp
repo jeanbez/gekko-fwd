@@ -24,11 +24,13 @@ hg_id_t ipc_mk_node_id;
 hg_id_t ipc_access_id;
 hg_id_t ipc_stat_id;
 hg_id_t ipc_rm_node_id;
+hg_id_t ipc_decr_size_id;
 hg_id_t ipc_update_metadentry_id;
 hg_id_t ipc_get_metadentry_size_id;
 hg_id_t ipc_update_metadentry_size_id;
 hg_id_t ipc_write_data_id;
 hg_id_t ipc_read_data_id;
+hg_id_t ipc_trunc_data_id;
 hg_id_t ipc_get_dirents_id;
 // RPC IDs
 hg_id_t rpc_minimal_id;
@@ -36,11 +38,13 @@ hg_id_t rpc_mk_node_id;
 hg_id_t rpc_access_id;
 hg_id_t rpc_stat_id;
 hg_id_t rpc_rm_node_id;
+hg_id_t rpc_decr_size_id;
 hg_id_t rpc_update_metadentry_id;
 hg_id_t rpc_get_metadentry_size_id;
 hg_id_t rpc_update_metadentry_size_id;
 hg_id_t rpc_write_data_id;
 hg_id_t rpc_read_data_id;
+hg_id_t rpc_trunc_data_id;
 hg_id_t rpc_get_dirents_id;
 // Margo instances
 margo_instance_id ld_margo_ipc_id;
@@ -98,6 +102,8 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
         ipc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, NULL);
         ipc_rm_node_id = MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t,
                                         rpc_err_out_t, NULL);
+        ipc_decr_size_id = MARGO_REGISTER(mid, hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t,
+                                          NULL);
         ipc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
                                                   rpc_err_out_t, NULL);
         ipc_get_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::get_metadentry_size, rpc_path_only_in_t,
@@ -110,6 +116,8 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
                                            NULL);
         ipc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
                                           NULL);
+        ipc_trunc_data_id = MARGO_REGISTER(mid, hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t,
+                                          NULL);
         ipc_get_dirents_id = MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
                                           NULL);
     } else {
@@ -120,6 +128,8 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
         rpc_stat_id = MARGO_REGISTER(mid, hg_tag::stat, rpc_path_only_in_t, rpc_stat_out_t, NULL);
         rpc_rm_node_id = MARGO_REGISTER(mid, hg_tag::remove, rpc_rm_node_in_t,
                                         rpc_err_out_t, NULL);
+        rpc_decr_size_id = MARGO_REGISTER(mid, hg_tag::decr_size, rpc_trunc_in_t, rpc_err_out_t,
+                                          NULL);
         rpc_update_metadentry_id = MARGO_REGISTER(mid, hg_tag::update_metadentry, rpc_update_metadentry_in_t,
                                                   rpc_err_out_t, NULL);
         rpc_get_metadentry_size_id = MARGO_REGISTER(mid, hg_tag::get_metadentry_size, rpc_path_only_in_t,
@@ -131,6 +141,8 @@ void register_client_rpcs(margo_instance_id mid, Margo_mode mode) {
         rpc_write_data_id = MARGO_REGISTER(mid, hg_tag::write_data, rpc_write_data_in_t, rpc_data_out_t,
                                            NULL);
         rpc_read_data_id = MARGO_REGISTER(mid, hg_tag::read_data, rpc_read_data_in_t, rpc_data_out_t,
+                                          NULL);
+        rpc_trunc_data_id = MARGO_REGISTER(mid, hg_tag::trunc_data, rpc_trunc_in_t, rpc_err_out_t,
                                           NULL);
         rpc_get_dirents_id = MARGO_REGISTER(mid, hg_tag::get_dirents, rpc_get_dirents_in_t, rpc_get_dirents_out_t,
                                           NULL);
