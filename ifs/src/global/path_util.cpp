@@ -56,3 +56,16 @@ std::string path_to_relative(const std::string& root_path, const std::string& ab
 
     return {rel_it_begin, rel_it_end};
 }
+
+std::string dirname(const std::string& path) {
+    assert(path.size() > 1 || path.front() == PSP);
+    assert(path.size() == 1 || !has_trailing_slash(path));
+
+    auto parent_path_size = path.find_last_of(PSP);
+    assert(parent_path_size != std::string::npos);
+    if(parent_path_size == 0) {
+        // parent is '/'
+        parent_path_size = 1;
+    }
+    return path.substr(0, parent_path_size);
+}

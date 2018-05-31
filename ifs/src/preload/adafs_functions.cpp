@@ -1,6 +1,7 @@
 #include <sys/statfs.h>
 
 #include <global/configure.hpp>
+#include <global/path_util.hpp>
 #include <preload/preload.hpp>
 #include <preload/adafs_functions.hpp>
 #include <preload/rpc/ld_rpc_metadentry.hpp>
@@ -78,6 +79,19 @@ int adafs_mk_node(const std::string& path, const mode_t mode) {
     //file type must be either regular file or directory
     assert(S_ISREG(mode) || S_ISDIR(mode));
 
+    struct stat st;
+    auto p_comp = dirname(path);
+    auto ret = adafs_stat(p_comp, &st);
+    if(ret != 0) {
+        CTX->log()->debug("{}() parent component does not exists: '{}'", __func__, p_comp);
+        errno = ENOENT;
+        return -1;
+    }
+    if(!S_ISDIR(st.st_mode)) {
+        CTX->log()->debug("{}() parent component is not a direcotory: '{}'", __func__, p_comp);
+        errno = ENOTDIR;
+        return -1;
+    }
     return rpc_send_mk_node(path, mode);
 }
 
