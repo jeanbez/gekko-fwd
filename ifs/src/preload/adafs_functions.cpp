@@ -20,54 +20,78 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         return -1;
     }
 
-    if (flags & O_CREAT){
+    bool exists = true;
+    struct stat st;
+    err = adafs_stat(path, &st);
+    if(err) {
+        if(errno == ENOENT) {
+            exists = false;
+        } else {
+            CTX->log()->error("{}() error while retriving stat to file", __func__);
+            return -1;
+        }
+    }
+
+    if (!exists) {
+        if (! (flags & O_CREAT)) {
+            // file doesn't exists and O_CREAT was not set
+            errno = ENOENT;
+            return -1;
+        }
+
+        /***   CREATION    ***/
+        assert(flags & O_CREAT);
+
         if(flags & O_DIRECTORY){
-            CTX->log()->error("{}() `O_CREAT` with `O_DIRECTORY` flag is not supported", __func__);
+            CTX->log()->error("{}() O_DIRECTORY use with O_CREAT. NOT SUPPORTED", __func__);
             errno = ENOTSUP;
             return -1;
         }
 
         // no access check required here. If one is using our FS they have the permissions.
-        err = adafs_mk_node(path, mode | S_IFREG);
-        if(err != 0)
+        if(adafs_mk_node(path, mode | S_IFREG)) {
+            CTX->log()->error("{}() error creating non-existent file", __func__);
             return -1;
-
+        }
     } else {
-        if(flags & O_DIRECTORY){
-            return adafs_opendir(path);
+        /* File already exists */
+
+        if(flags & O_EXCL) {
+            // File exists and O_EXCL was set
+            errno = EEXIST;
+            return -1;
         }
 
-        auto mask = F_OK; // F_OK == 0
 #if defined(CHECK_ACCESS_DURING_OPEN)
+        auto mask = F_OK; // F_OK == 0
         if ((mode & S_IRUSR) || (mode & S_IRGRP) || (mode & S_IROTH))
             mask = mask & R_OK;
         if ((mode & S_IWUSR) || (mode & S_IWGRP) || (mode & S_IWOTH))
             mask = mask & W_OK;
         if ((mode & S_IXUSR) || (mode & S_IXGRP) || (mode & S_IXOTH))
             mask = mask & X_OK;
-#endif
-#if defined(DO_LOOKUP)
-        // check if file exists
-        err = rpc_send_access(path, mask);
-        if(err != 0)
-            return -1;
-#endif
-    }
 
-    if( flags & O_TRUNC ){
-        //TODO truncation leave chunks on the server side
-        if((flags & O_RDWR) || (flags & O_WRONLY)) {
-            long updated_size;
-            auto ret = rpc_send_update_metadentry_size(path.c_str(), 0, 0, false, updated_size);
-            if (ret != 0) {
-                CTX->log()->error("{}() update_metadentry_size failed with ret {}", __func__, ret);
-                errno = EIO;
-                return -1; // ERR
+        if( ! ((mask & md.mode()) == mask)) {
+            errno = EACCES;
+            return -1;
+        }
+#endif
+
+        if(S_ISDIR(st.st_mode)) {
+            return adafs_opendir(path);
+        }
+
+        /*** Regular file exists ***/
+        assert(S_ISREG(st.st_mode));
+
+        if( (flags & O_TRUNC) && ((flags & O_RDWR) || (flags & O_WRONLY)) ) {
+            if(adafs_truncate(path, st.st_size, 0)) {
+                CTX->log()->error("{}() error truncating file", __func__);
+                return -1;
             }
         }
     }
 
-    // TODO the open flags should not be in the map just set the pos accordingly
     return CTX->file_map()->add(std::make_shared<OpenFile>(path, flags));
 }
 
@@ -308,19 +332,17 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
 
 int adafs_opendir(const std::string& path) {
     init_ld_env_if_needed();
-    std::string attr;
-    auto err = rpc_send_stat(path, attr);
-    if (err != 0) {
-        CTX->log()->debug("{}() send stat failed", __func__);
-        return err;
-    }
+
     struct stat st;
-    db_val_to_stat(path, attr, st);
+    if(adafs_stat(path, &st)) {
+        return -1;
+    }
     if(!(st.st_mode & S_IFDIR)) {
         CTX->log()->debug("{}() path is not a directory", __func__);
         errno = ENOTDIR;
         return -1;
     }
+
     auto open_dir = std::make_shared<OpenDir>(path);
     rpc_send_get_dirents(*open_dir);
     return CTX->file_map()->add(open_dir);
