@@ -1,3 +1,8 @@
+#ifndef IFS_CHNK_CALC_UTIL_HPP
+#define IFS_CHNK_CALC_UTIL_HPP
+
+#include <cassert>
+
 /**
  * Compute the base2 logarithm for 64 bit integers
  */
@@ -86,3 +91,5 @@ inline uint64_t chnk_count_for_offset(const off64_t offset, const size_t count, 
     return static_cast<uint64_t>((chnk_end >> log2(chnk_size)) -
                                  (chnk_start >> log2(chnk_size)) + 1);
 }
+
+#endif
