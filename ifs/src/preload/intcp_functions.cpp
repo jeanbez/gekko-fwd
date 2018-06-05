@@ -842,7 +842,7 @@ ssize_t readv(int fd, const struct iovec *iov, int iovcnt) {
 ssize_t read(int fd, void* buf, size_t count) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {}", __func__, fd);
+        CTX->log()->trace("{}() called with fd {}, count {}", __func__, fd, count);
         if (CTX->file_map()->exist(fd)) {
             auto adafs_fd = CTX->file_map()->get(fd);
             auto pos = adafs_fd->pos(); //retrieve the current offset
@@ -851,6 +851,7 @@ ssize_t read(int fd, void* buf, size_t count) {
             if (ret > 0) {
                 adafs_fd->pos(pos + ret);
             }
+            CTX->log()->trace("{}() returning {}", __func__, ret);
             return ret;
         }
     }

@@ -298,6 +298,7 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
     auto path = make_shared<string>(adafs_fd->path());
+    CTX->log()->trace("{}() fd: {}, count: {}, offset: {}", __func__, fd, count, offset);
     auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
     ssize_t ret = 0;
     long updated_size = 0;
@@ -318,6 +319,7 @@ ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
     auto path = make_shared<string>(adafs_fd->path());
+    CTX->log()->trace("{}() fd: {}, count: {}, offset: {}", __func__, fd, count, offset);
     // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
 #if defined(ZERO_BUFFER_BEFORE_READ)
     memset(buf, 0, sizeof(char)*count);
