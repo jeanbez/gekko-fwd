@@ -16,6 +16,10 @@
 
 using namespace std;
 
+void inline notsup_error_32_bit_func(const char* func = __builtin_FUNCTION()) {
+    CTX->log()->error("{}() is NOT SUPPORTED. According to glibc, this function should be called only on 32-bit machine", func);
+}
+
 int open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
 
@@ -604,11 +608,9 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat64(rel_path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
 }
@@ -668,24 +670,19 @@ passthrough:
 int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int flags) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path '{}'", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat64(rel_path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__fxstatat64)>(libc___fxstatat64))(ver, dirfd, path, buf, flags);
-
 }
 
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {}", __func__, fd);
-        if (CTX->file_map()->exist(fd)) {
-            auto path = CTX->file_map()->get(fd)->path();
-            return adafs_stat64(path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
 }
@@ -705,11 +702,9 @@ int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
 int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat64(rel_path, buf);
-        }
+        notsup_error_32_bit_func();
+        errno = ENOTSUP;
+        return -1;
     }
     return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
 }

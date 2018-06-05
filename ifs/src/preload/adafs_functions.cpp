@@ -146,22 +146,12 @@ int adafs_access(const std::string& path, const int mask) {
 #endif
 }
 
-// TODO combine adafs_stat and adafs_stat64
 int adafs_stat(const string& path, struct stat* buf) {
     init_ld_env_if_needed();
     string attr = ""s;
     auto err = rpc_send_stat(path, attr);
     if (err == 0)
         db_val_to_stat(path, attr, *buf);
-    return err;
-}
-
-int adafs_stat64(const string& path, struct stat64* buf) {
-    init_ld_env_if_needed();
-    string attr = ""s;
-    auto err = rpc_send_stat(path, attr);
-    if (err == 0)
-        db_val_to_stat64(path, attr, *buf);
     return err;
 }
 
