@@ -17,6 +17,7 @@ using namespace std;
  */
 ssize_t rpc_send_write(const string& path, const void* buf, const bool append_flag, const off64_t in_offset,
                        const size_t write_size, const int64_t updated_metadentry_size) {
+    assert(write_size > 0);
     // Calculate chunkid boundaries and numbers so that daemons know in which interval to look for chunks
     off64_t offset = in_offset;
     if (append_flag)

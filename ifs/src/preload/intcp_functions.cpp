@@ -797,8 +797,11 @@ ssize_t writev(int fd, const struct iovec *iov, int iovcnt) {
             ssize_t written = 0;
             ssize_t ret;
             for (int i = 0; i < iovcnt; ++i){
-                auto buf = (iov+i)->iov_base;
                 auto count = (iov+i)->iov_len;
+                if(count == 0) {
+                    continue;
+                }
+                auto buf = (iov+i)->iov_base;
                 ret = adafs_pwrite_ws(fd, buf, count, pos);
                 if(ret == -1) {
                     break;
