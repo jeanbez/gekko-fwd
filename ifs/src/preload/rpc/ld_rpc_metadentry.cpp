@@ -469,7 +469,7 @@ void rpc_send_get_dirents(OpenDir& open_dir){
     std::vector<char*> recv_buffers(host_size);
 
     // preallocate receiving buffer. The actual size is not known yet.
-    auto recv_buff = std::make_unique<char[]>(RPC_DIRENTS_BUFF_SIZE);
+    auto recv_buff = std::unique_ptr<char[]>(new char[RPC_DIRENTS_BUFF_SIZE]);
     const unsigned long int per_host_buff_size = RPC_DIRENTS_BUFF_SIZE / host_size;
 
     hg_return_t hg_ret;
