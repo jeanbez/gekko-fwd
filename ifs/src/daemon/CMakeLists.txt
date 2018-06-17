@@ -36,6 +36,7 @@ target_link_libraries(adafs_daemon
     metadata_db
     storage
     distributor
+    log_util
     # margo libs
     ${ABT_LIBRARIES}
     ${ABT_SNOOZER_LIBRARIES}

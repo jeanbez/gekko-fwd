@@ -1,5 +1,6 @@
 
 #include <daemon/adafs_daemon.hpp>
+#include <global/log_util.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <global/rpc/distributor.hpp>
@@ -346,40 +347,31 @@ void shutdown_handler(int dummy) {
 }
 
 void initialize_loggers() {
+    std::string path = DEFAULT_DAEMON_LOG_PATH;
+    // Try to get log path from env variable
+    std::string env_path_key = ENV_PREFIX;
+    env_path_key += "DAEMON_LOG_PATH";
+    char* env_path = getenv(env_path_key.c_str());
+    if (env_path != nullptr) {
+        path = env_path;
+    }
+
+    spdlog::level::level_enum level = get_spdlog_level(DEFAULT_DAEMON_LOG_LEVEL);
+    // Try to get log path from env variable
+    std::string env_level_key = ENV_PREFIX;
+    env_level_key += "LOG_LEVEL";
+    char* env_level = getenv(env_level_key.c_str());
+    if (env_level != nullptr) {
+        level = get_spdlog_level(env_level);
+    }
+
     auto logger_names = std::vector<std::string>{
         "main",
         "MetadataDB",
         "ChunkStorage",
     };
 
-    /* Create common sink */
-    auto file_sink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(LOG_DAEMON_PATH);
-
-    /* Create and configure loggers */
-    auto loggers = std::list<std::shared_ptr<spdlog::logger>>();
-    for(const auto& name: logger_names){
-        auto logger = std::make_shared<spdlog::logger>(name, file_sink);
-        logger->flush_on(spdlog::level::trace);
-        loggers.push_back(logger);
-    }
-
-    /* register loggers */
-    for(const auto& logger: loggers){
-        spdlog::register_logger(logger);
-    }
-
-    // set logger format
-    spdlog::set_pattern("[%C-%m-%d %H:%M:%S.%f] %P [%L][%n] %v");
-
-#if defined(LOG_TRACE)
-        spdlog::set_level(spdlog::level::trace);
-#elif defined(LOG_DEBUG)
-        spdlog::set_level(spdlog::level::debug);
-#elif defined(LOG_INFO)
-        spdlog::set_level(spdlog::level::info);
-#else
-        spdlog::set_level(spdlog::level::off);
-#endif
+    setup_loggers(logger_names, level, path);
 }
 
 int main(int argc, const char* argv[]) {
