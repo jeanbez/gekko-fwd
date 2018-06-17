@@ -445,13 +445,7 @@ int unlinkat(int dirfd, const char *cpath, int flags) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         std::string path(cpath);
-        CTX->log()->trace("{}() called with path {}, dirfd {}, flags {}", __func__, path, dirfd, flags);
-
-        if(flags & AT_REMOVEDIR) {
-            CTX->log()->error("{}() AT_REMOVEDIR flag is not supported", __func__);
-            errno = ENOTDIR;
-            return -1;
-        }
+        CTX->log()->trace("{}() called with path '{}' dirfd {}, flags {}", __func__, path, dirfd, flags);
 
         if(is_relative_path(path)) {
             if(!(CTX->file_map()->exist(dirfd))) {
@@ -466,14 +460,20 @@ int unlinkat(int dirfd, const char *cpath, int flags) {
             if(has_trailing_slash(path)){
                 path.pop_back();
             }
-            return adafs_rm_node(dir->path() + '/' + path);
+            path = dir->path() + '/' + path;
         } else {
             // Path is absolute
             assert(is_absolute_path(path));
 
-            if (CTX->relativize_path(path)) {
-                return adafs_rm_node(path);
+            if (!CTX->relativize_path(path)) {
+                goto passthrough;
             }
+        }
+
+        if(flags & AT_REMOVEDIR) {
+            return adafs_rmdir(path);
+        } else {
+            return adafs_rm_node(path);
         }
     }
 passthrough:
