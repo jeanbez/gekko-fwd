@@ -64,7 +64,9 @@ DecreaseSizeOperand::DecreaseSizeOperand(const size_t size) :
 DecreaseSizeOperand::DecreaseSizeOperand(const rdb::Slice& serialized_op){
     //Parse size
     size_t read = 0;
-    size = std::stoul(serialized_op.data(), &read);
+    //we need to convert serialized_op to a string because it doesn't contain the
+    //leading slash needed by stoul
+    size = std::stoul(serialized_op.ToString(), &read);
     //check that we consumed all the input string
     assert(read == serialized_op.size());
 }
