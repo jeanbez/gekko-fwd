@@ -4,7 +4,6 @@
 
 extern "C" {
 #include <abt.h>
-#include <abt-snoozer.h>
 #include <mercury_types.h>
 #include <mercury_proc_string.h>
 #include <margo.h>

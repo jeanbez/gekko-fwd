@@ -51,7 +51,6 @@ find_package(RocksDB REQUIRED)
 find_package(Libev REQUIRED)
 find_package(Mercury REQUIRED)
 find_package(Abt REQUIRED)
-find_package(Abt-Snoozer REQUIRED)
 find_package(Margo REQUIRED)
 
 # boost dependencies, system is required for filesystem

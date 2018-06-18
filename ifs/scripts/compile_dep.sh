@@ -297,36 +297,10 @@ prepare_build_dir ${CURR}
 cd ${CURR}
 ./autogen.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL}
+../configure --prefix=${INSTALL} --enable-perf-opt --disable-checks
 make -j${CORES}
 make install
 [ "${PERFORM_TEST}" ] && make check
-
-echo "############################################################ Installing:  Abt-snoozer"
-# Abt snoozer
-CURR=${SOURCE}/abt-snoozer
-prepare_build_dir ${CURR}
-cd ${CURR}
-./prepare.sh
-cd ${CURR}/build
-../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig
-make -j${CORES}
-make install
-[ "${PERFORM_TEST}" ] && make check
-
-#echo "############################################################ Installing:  Abt-IO"
-## Abt IO
-#CURR=${SOURCE}/abt-io
-#prepare_build_dir ${CURR}
-#cd ${CURR}
-#echo "########## ADA-FS injection: Applying abt-io c++ template clash patch"
-#git apply ${PATCH_DIR}/abt_io_cplusplus_template_clash.patch
-#./prepare.sh
-#cd ${CURR}/build
-#../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig
-#make -j${CORES}
-#make install
-#[ "${PERFORM_TEST}" ] && make check  # The tests create so huge files that breaks memory :D
 
 echo "############################################################ Installing:  Margo"
 # Margo

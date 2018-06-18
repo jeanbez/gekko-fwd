@@ -46,7 +46,6 @@ target_link_libraries(adafs_preload_client
     # external
     dl
     ${ABT_LIBRARIES}
-    ${ABT_SNOOZER_LIBRARIES}
     mercury
     ${MARGO_LIBRARIES}
     Threads::Threads
@@ -55,7 +54,6 @@ target_link_libraries(adafs_preload_client
 target_include_directories(adafs_preload_client
     PRIVATE
     ${ABT_INCLUDE_DIRS}
-    ${ABT_SNOOZER_INCLUDE_DIRS}
     ${LIBEV_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
     )

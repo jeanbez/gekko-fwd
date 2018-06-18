@@ -39,7 +39,6 @@ target_link_libraries(adafs_daemon
     log_util
     # margo libs
     ${ABT_LIBRARIES}
-    ${ABT_SNOOZER_LIBRARIES}
     mercury
     ${MARGO_LIBRARIES}
     # others
@@ -51,7 +50,6 @@ target_link_libraries(adafs_daemon
 target_include_directories(adafs_daemon
     PRIVATE
     ${ABT_INCLUDE_DIRS}
-    ${ABT_SNOOZER_INCLUDE_DIRS}
     ${LIBEV_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
     )

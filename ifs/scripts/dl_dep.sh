@@ -199,17 +199,13 @@ if [ "${NA_LAYER}" == "ofi" ] || [ "${NA_LAYER}" == "all" ]; then
     fi
 fi
 # get Mercury
-clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "8eb436a6cc42317050117ad9925c2b03c822e6b9"  "--recurse-submodules" &
+clonedeps "mercury" "https://github.com/mercury-hpc/mercury" "f7f6955f140426b2a7c9e26dc35f8c8e1654d86a"  "--recurse-submodules" &
 # get Argobots
-clonedeps "argobots" "https://github.com/carns/argobots.git" "78ceea28ed44faca12cf8ea7f5687b894c66a8c4" "-b dev-get-dev-basic" &
-# get Argobots-snoozer
-clonedeps "abt-snoozer" "https://xgitlab.cels.anl.gov/sds/abt-snoozer.git" "54c506103cf2d77bd76460db29a67a875f5c5a85" &
-# get Argobots-IO
-#clonedeps "abt-io" "https://xgitlab.cels.anl.gov/sds/abt-io.git" "35f16da88a1c579ed4726bfa77daa1884829fc0c" &
+clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215d6862f527775387418f7f6" "-b dev-fifo-wait" &
 # get Margo
-clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "56a2b6585ec8152d5e7d107a0cf33be84dbd5bed" &
+clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "cf673d430ce3d4b4f0a32f19f261e7898a863b81" &
 # get rocksdb
-wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.12.4.tar.gz" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.13.3.tar.gz" &
 
 # Wait for all download to be completed
 wait
