@@ -282,6 +282,8 @@ if [ "$NA_LAYER" == "cci" ] || [ "$NA_LAYER" == "all" ]; then
     echo "########## Applying cci addr lookup error handling patch"
     git apply ${PATCH_DIR}/mercury_cci_verbs_lookup.patch
 fi
+echo "########## Applying mercury deregister socket patch"
+git apply ${PATCH_DIR}/mercury_deregister_sock.patch
 cd ${CURR}/build
 $CMAKE -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
