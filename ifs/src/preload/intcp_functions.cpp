@@ -224,6 +224,7 @@ int fileno(FILE *stream) {
     if(CTX->initialized() && (stream != nullptr)) {
         auto fd = file_to_fd(stream);
         if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called with fd {}", __func__, fd);
             return fd;
         }
     }
