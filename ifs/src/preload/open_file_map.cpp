@@ -1,8 +1,9 @@
+#include <fcntl.h>
+
 #include <global/global_defs.hpp>
 #include <preload/open_file_map.hpp>
 #include <preload/open_dir.hpp>
 #include <preload/preload.hpp>
-#include <preload/preload_util.hpp>
 
 using namespace std;
 
@@ -24,7 +25,10 @@ OpenFile::OpenFile(const string& path, const int flags) : path_(path) {
     pos_ = 0; // If O_APPEND flag is used, it will be used before each write.
 }
 
-OpenFileMap::OpenFileMap() {}
+OpenFileMap::OpenFileMap():
+    fd_idx(10000),
+    fd_validation_needed(false)
+    {}
 
 OpenFile::~OpenFile() {
 
@@ -157,3 +161,31 @@ int OpenFileMap::dup2(const int oldfd, const int newfd) {
     files_.insert(make_pair(newfd, open_file));
     return newfd;
 }
+
+/**
+ * Generate new file descriptor index to be used as an fd within one process in ADA-FS
+ * @return fd_idx
+ */
+int OpenFileMap::generate_fd_idx() {
+    // We need a mutex here for thread safety
+    std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
+    if (fd_idx == std::numeric_limits<int>::max()) {
+        CTX->log()->info("{}() File descriptor index exceeded ints max value. Setting it back to 100000", __func__);
+        /*
+         * Setting fd_idx back to 3 could have the effect that fd are given twice for different path.
+         * This must not happen. Instead a flag is set which tells can tell the OpenFileMap that it should check
+         * if this fd is really safe to use.
+         */
+        fd_idx = 100000;
+        fd_validation_needed = true;
+    }
+    return fd_idx++;
+}
+
+int OpenFileMap::get_fd_idx() {
+    std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
+    return fd_idx;
+}
+
+
+

@@ -76,14 +76,8 @@ extern hg_id_t rpc_trunc_data_id;
 extern hg_id_t rpc_get_dirents_id;
 // rpc addresses. Populated when environment is initialized. After that it is read-only accessed
 extern std::map<uint64_t, hg_addr_t> rpc_addresses;
-// file descriptor index validation flag
-extern std::atomic<bool> fd_validation_needed;
 
 // function definitions
-
-int generate_fd_idx();
-
-int get_fd_idx();
 
 bool is_fs_path(const char* path);
 

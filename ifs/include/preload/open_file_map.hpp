@@ -5,6 +5,7 @@
 #include <map>
 #include <mutex>
 #include <memory>
+#include <atomic>
 
 /* Forward declaration */
 class OpenDir;
@@ -64,6 +65,18 @@ private:
     std::recursive_mutex files_mutex_;
 
     int safe_generate_fd_idx_();
+    
+    /*
+     * TODO: Setting our file descriptor index to a specific value is dangerous because we might clash with the kernel.
+     * E.g., if we would passthrough and not intercept and the kernel assigns a file descriptor but we will later use
+     * the same fd value, we will intercept calls that were supposed to be going to the kernel. This works the other way around too.
+     * To mitigate this issue, we set the initial fd number to a high value. We "hope" that we do not clash but this is no permanent solution.
+     * Note: This solution will probably work well already for many cases because kernel fd values are reused, unlike to ours.
+     * The only case where we will clash with the kernel is, if one process has more than 100000 files open at the same time.
+     */
+    int fd_idx;
+    std::mutex fd_idx_mutex;
+    std::atomic<bool> fd_validation_needed;
 
 public:
     OpenFileMap();
@@ -82,6 +95,8 @@ public:
 
     int dup2(int oldfd, int newfd);
 
+    int generate_fd_idx();
+    int get_fd_idx();
 };
 
 

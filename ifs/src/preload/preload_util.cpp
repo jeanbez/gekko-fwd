@@ -15,43 +15,6 @@ using namespace std;
 
 static const std::string dentry_val_delim = ","s;
 
-/*
- * TODO: Setting our file descriptor index to a specific value is dangerous because we might clash with the kernel.
- * E.g., if we would passthrough and not intercept and the kernel assigns a file descriptor but we will later use
- * the same fd value, we will intercept calls that were supposed to be going to the kernel. This works the other way around too.
- * To mitigate this issue, we set the initial fd number to a high value. We "hope" that we do not clash but this is no permanent solution.
- * Note: This solution will probably work well already for many cases because kernel fd values are reused, unlike to ours.
- * The only case where we will clash with the kernel is, if one process has more than 100000 files open at the same time.
- */
-static int fd_idx = 100000;
-static mutex fd_idx_mutex;
-std::atomic<bool> fd_validation_needed(false);
-
-/**
- * Generate new file descriptor index to be used as an fd within one process in ADA-FS
- * @return fd_idx
- */
-int generate_fd_idx() {
-    // We need a mutex here for thread safety
-    std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
-    if (fd_idx == std::numeric_limits<int>::max()) {
-        CTX->log()->info("{}() File descriptor index exceeded ints max value. Setting it back to 100000", __func__);
-        /*
-         * Setting fd_idx back to 3 could have the effect that fd are given twice for different path.
-         * This must not happen. Instead a flag is set which tells can tell the OpenFileMap that it should check
-         * if this fd is really safe to use.
-         */
-        fd_idx = 100000;
-        fd_validation_needed = true;
-    }
-    return fd_idx++;
-}
-
-int get_fd_idx() {
-    std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
-    return fd_idx;
-}
-
 bool is_fs_path(const char* path) {
     return strstr(path, CTX->mountdir().c_str()) == path;
 }
