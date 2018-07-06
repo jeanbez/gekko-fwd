@@ -205,7 +205,7 @@ clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215
 # get Margo
 clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "cf673d430ce3d4b4f0a32f19f261e7898a863b81" &
 # get rocksdb
-wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.13.4.tar.gz" &
+wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.14.2.tar.gz" &
 
 # Wait for all download to be completed
 wait
