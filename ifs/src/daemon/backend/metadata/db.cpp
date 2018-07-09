@@ -20,7 +20,7 @@ MetadataDB::MetadataDB(const std::string& path): path(path) {
     rdb::DB * rdb_ptr;
     auto s = rocksdb::DB::Open(options, path, &rdb_ptr);
     if (!s.ok()) {
-        std::runtime_error("Failed to opend RocksDB: " + s.ToString());
+        throw std::runtime_error("Failed to open RocksDB: " + s.ToString());
     }
     this->db.reset(rdb_ptr);
 }

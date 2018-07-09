@@ -40,6 +40,7 @@ bool init_environment() {
         ADAFS_DATA->mdb(std::make_shared<MetadataDB>(metadata_path));
     } catch (const std::exception & e) {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize metadata DB: {}", __func__, e.what());
+        return false;
     }
 
     // Initialize data backend
