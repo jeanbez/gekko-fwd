@@ -43,7 +43,7 @@ endif (NOT ADAFS_DEPS_INSTALL)
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
-find_package(snappy REQUIRED)
+find_package(Snappy REQUIRED)
 find_package(ZStd REQUIRED)
 find_package(JeMalloc) # required if rocksdb has been build with jemalloc
 find_package(RocksDB REQUIRED)
@@ -119,7 +119,7 @@ target_link_libraries(RocksDB
     INTERFACE
     ${ROCKSDB_LIBRARIES}
     # rocksdb libs
-    ${snappy_LIBRARIES}
+    ${Snappy_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${BZIP2_LIBRARIES}
     ${ZSTD_LIBRARIES}
