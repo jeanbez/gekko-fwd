@@ -48,6 +48,7 @@ target_link_libraries(adafs_preload_client
     ${ABT_LIBRARIES}
     mercury
     ${MARGO_LIBRARIES}
+    Boost::boost # needed for tokenizer header
     Threads::Threads
 )
 
