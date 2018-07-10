@@ -157,6 +157,9 @@ mkdir -p ${SOURCE}
 ######### From now on exits on any error ########
 set -e
 
+export CPATH="${CPATH}:${INSTALL}/include"
+export LIBRARY_PATH="${LIBRARY_PATH}:${INSTALL}/lib:${INSTALL}/lib64"
+
 # Set cluster dependencies first
 if [[ ( "${CLUSTER}" == "mogon1" ) || ( "${CLUSTER}" == "fh2" ) || ( "${CLUSTER}" == "mogon2" ) ]]; then
     # get libtool
