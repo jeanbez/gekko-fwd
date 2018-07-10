@@ -321,7 +321,7 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/rocksdb
 cd ${CURR}
 make clean
-make USE_RTTI=1 -j${CORES} static_lib
+make CXXFLAGS="-Wno-stringop-truncation" USE_RTTI=1 -j${CORES} static_lib
 make INSTALL_PATH=${INSTALL} install
 
 echo "Done"
