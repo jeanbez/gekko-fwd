@@ -178,7 +178,7 @@ size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
             if (ret > 0) {
                 // Update offset in file descriptor in the file map
                 adafs_fd->pos(pos + ret);
-                return ret % size;
+                return ret / size;
             }
             return ret;
         }
@@ -198,7 +198,7 @@ size_t intcp_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
             if (ret > 0) {
                 // Update offset in file descriptor in the file map
                 adafs_fd->pos(pos + ret);
-                return ret % size;
+                return ret / size;
             }
             return ret;
         }
