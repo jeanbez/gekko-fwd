@@ -231,7 +231,11 @@ off64_t adafs_lseek(shared_ptr<OpenFile> adafs_fd, off64_t offset, int whence) {
 
 int adafs_truncate(const std::string& path, off_t old_size, off_t new_size) {
     assert(new_size >= 0);
-    assert(new_size < old_size);
+    assert(new_size <= old_size);
+
+    if(new_size == old_size) {
+        return 0;
+    }
 
     if (rpc_send_decr_size(path, new_size)) {
         CTX->log()->debug("{}() failed to decrease size", __func__);
