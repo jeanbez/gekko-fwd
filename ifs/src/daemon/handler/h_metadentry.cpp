@@ -99,7 +99,7 @@ static hg_return_t rpc_srv_stat(hg_handle_t handle) {
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("Got srv stat RPC for path {}", in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() path: '{}'", __func__, in.path);
     std::string val;
 
     try {
@@ -139,8 +139,7 @@ static hg_return_t rpc_srv_decr_size(hg_handle_t handle) {
         throw runtime_error("Failed to retrieve input from handle");
     }
 
-    ADAFS_DATA->spdlogger()->debug("Serving decrement size RPC with path: '{}', length: {}",
-            in.path, in.length);
+    ADAFS_DATA->spdlogger()->debug("{}() path: '{}', length: {}", __func__, in.path, in.length);
 
     try {
         ADAFS_DATA->mdb()->decrease_size(in.path, in.length);
@@ -270,7 +269,7 @@ static hg_return_t rpc_srv_update_metadentry_size(hg_handle_t handle) {
     if (ret != HG_SUCCESS)
         ADAFS_DATA->spdlogger()->error("{}() Failed to retrieve input from handle", __func__);
     assert(ret == HG_SUCCESS);
-    ADAFS_DATA->spdlogger()->debug("{}() Got update metadentry size RPC with path {}", __func__, in.path);
+    ADAFS_DATA->spdlogger()->debug("{}() path: {}, size: {}, offset: {}, append: {}", __func__, in.path, in.size, in.offset, in.append);
 
     try {
         update_metadentry_size(in.path, in.size, in.offset, (in.append == HG_TRUE));

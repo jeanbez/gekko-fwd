@@ -480,6 +480,7 @@ static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Could not get RPC input data with err {}", __func__, ret);
         throw runtime_error("Failed to get RPC input data");
     }
+    ADAFS_DATA->spdlogger()->debug("{}() path: '{}', length: {}", __func__, in.path, in.length);
 
     unsigned int chunk_start = chnk_id_for_offset(in.length, CHUNKSIZE);
 
@@ -492,7 +493,7 @@ static hg_return_t rpc_srv_trunc_data(hg_handle_t handle) {
 
     ADAFS_DATA->storage()->trim_chunk_space(in.path, chunk_start);
 
-    ADAFS_DATA->spdlogger()->debug("Sending output {}", out.err);
+    ADAFS_DATA->spdlogger()->debug("{}() Sending output {}", __func__, out.err);
     auto hret = margo_respond(handle, &out);
     if (hret != HG_SUCCESS) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to respond");
