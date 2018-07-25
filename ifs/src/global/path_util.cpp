@@ -1,4 +1,6 @@
 #include <global/path_util.hpp>
+#include <unistd.h>
+#include <system_error>
 #include <cassert>
 
 
@@ -69,3 +71,19 @@ std::string dirname(const std::string& path) {
     }
     return path.substr(0, parent_path_size);
 }
+
+std::string get_current_working_dir() {
+    char temp[PATH_MAX_LEN];
+    if(getcwd(temp, PATH_MAX_LEN) == NULL) {
+        throw std::system_error(errno,
+                                std::system_category(),
+                                "Failed to retrieve current working directory");
+    }
+    // getcwd could return "(unreachable)<PATH>" in some cases
+    if(temp[0] != '/') {
+        throw std::runtime_error(
+                "Current working directory is unreachable");
+    }
+    return {temp};
+}
+

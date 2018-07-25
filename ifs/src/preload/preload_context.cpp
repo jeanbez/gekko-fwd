@@ -28,6 +28,14 @@ std::string PreloadContext::mountdir() const {
     return mountdir_;
 }
 
+void PreloadContext::cwd(const std::string& path) {
+    cwd_ = path;
+}
+
+std::string PreloadContext::cwd() const {
+    return cwd_;
+}
+
 bool PreloadContext::relativize_path(std::string& path) const {
     // Relativize path should be called only after the library constructor has been executed
     assert(initialized_);

@@ -1,4 +1,5 @@
 #include <global/log_util.hpp>
+#include <global/path_util.hpp>
 #include <global/global_defs.hpp>
 #include <global/configure.hpp>
 #include <preload/preload.hpp>
@@ -305,6 +306,8 @@ void init_preload() {
     init_passthrough_if_needed();
     init_logging();
     CTX->log()->debug("Initialized logging subsystem");
+    CTX->cwd(get_current_working_dir());
+    CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
         cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);

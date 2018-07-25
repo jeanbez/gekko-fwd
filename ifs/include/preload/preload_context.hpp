@@ -44,6 +44,7 @@ class PreloadContext {
     std::shared_ptr<Distributor> distributor_;
     std::shared_ptr<FsConfig> fs_conf_;
 
+    std::string cwd_;
     std::string mountdir_;
     bool initialized_;
 
@@ -61,6 +62,9 @@ class PreloadContext {
 
     void mountdir(const std::string& path);
     std::string mountdir() const;
+
+    void cwd(const std::string& path);
+    std::string cwd() const;
 
     bool relativize_path(std::string& path) const;
 
