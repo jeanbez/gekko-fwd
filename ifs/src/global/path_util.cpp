@@ -20,6 +20,21 @@ bool has_trailing_slash(const std::string& path) {
     return path.back() == PSP;
 }
 
+std::vector<std::string> split_path(const std::string& path) { 
+    std::vector<std::string> tokens;
+    size_t start = std::string::npos;
+    size_t end = (path.front() != PSP)? 0 : 1;
+    while(end != std::string::npos && end < path.size()) {
+        start = end;
+        end = path.find(PSP, start);
+        tokens.push_back(path.substr(start, end - start));
+        if(end != std::string::npos) {
+            ++end;
+        }
+    } 
+    return tokens;
+}
+
 /* Make an absolute path relative to a root path
  *
  * Convert @absolute_path into a relative one with respect to the given @root_path.

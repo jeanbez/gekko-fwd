@@ -21,6 +21,7 @@ std::shared_ptr<spdlog::logger> PreloadContext::log() const {
 
 void PreloadContext::mountdir(const std::string& path) {
     assert(is_absolute_path(path));
+    mountdir_components_ = split_path(path);
     mountdir_ = path;
 }
 
