@@ -7,6 +7,7 @@ set(PRELOAD_SRC
     open_dir.cpp
     passthrough.cpp
     preload.cpp
+    resolve.cpp
     preload_util.cpp
     rpc/ld_rpc_data_ws.cpp
     rpc/ld_rpc_metadentry.cpp
@@ -32,6 +33,7 @@ set(PRELOAD_HEADERS
     ../../include/preload/open_dir.hpp
     ../../include/preload/passthrough.hpp
     ../../include/preload/preload.hpp
+    ../../include/preload/resolve.hpp
     ../../include/preload/preload_util.hpp
     ../../include/preload/rpc/ld_rpc_data_ws.hpp
     ../../include/preload/rpc/ld_rpc_metadentry.hpp

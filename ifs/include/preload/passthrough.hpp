@@ -92,6 +92,10 @@ extern void* libc_readdir;
 extern void* libc_closedir;
 
 extern void* libc_chdir;
+extern void* libc_fchdir;
+
+extern void* libc_getcwd;
+extern void* libc_get_current_dir_name;
 
 extern void* libc_realpath;
 

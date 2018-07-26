@@ -1124,14 +1124,91 @@ int intcp_closedir(DIR* dirp) {
 
 int chdir(const char* path){
     init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(chdir, path);
+    }
+
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    std::string rel_path(path);
-    if (CTX->relativize_path(rel_path)) {
-        CTX->log()->error("Attempt to chdir into adafs namespace: NOT SUPPORTED", __func__, path);
-        errno = ENOTSUP;
+    std::string rel_path;
+    const char* new_path;
+    if (CTX->relativize_path(path, rel_path)) {
+        //path falls in our namespace
+        struct stat st;
+        if(adafs_stat(rel_path, &st) != 0) {
+            CTX->log()->error("{}() path does not exists");
+            errno = ENOENT;
+            return -1;
+        }
+        if(!S_ISDIR(st.st_mode)) {
+            CTX->log()->error("{}() path is not a directory");
+            errno = ENOTDIR;
+            return -1;
+        }
+        new_path = CTX->mountdir().c_str();
+    } else {
+        new_path = rel_path.c_str();
+    }
+
+    if(LIBC_FUNC(chdir, new_path)) {
+        CTX->log()->error("{}() failed to change dir: {}",
+               __func__, std::strerror(errno));
         return -1;
     }
-    return (reinterpret_cast<decltype(&chdir)>(libc_chdir))(path);
+
+    CTX->cwd(rel_path);
+    return 0;
+}
+
+int fchdir(int fd) {
+    init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(fchdir, fd);
+    }
+    CTX->log()->trace("{}() called with fd {}", __func__, fd);
+    if (CTX->file_map()->exist(fd)) {
+        auto open_file = CTX->file_map()->get(fd);
+        auto open_dir = static_pointer_cast<OpenDir>(open_file);
+        if(!open_dir){
+            //Cast did not succeeded: open_file is a regular file
+            CTX->log()->error("{}() file descriptor refers to a normal file: '{}'",
+                    __func__, open_dir->path());
+            errno = EBADF;
+            return -1;
+        }
+        CTX->cwd(open_dir->path());
+    } else {
+        if(LIBC_FUNC(fchdir, fd) != 0) {
+            CTX->log()->error("{}() failed to change dir: {}",
+                    __func__, std::strerror(errno));
+        }
+        CTX->cwd(get_sys_cwd());
+    }
+    return 0;
+}
+
+char *getcwd(char *buf, size_t size) {
+    init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(getcwd, buf, size);
+    }
+    CTX->log()->trace("{}() called with size {}", __func__, size);
+    if(CTX->cwd().size() + 1 > size) {
+        CTX->log()->error("{}() buffer too small to host current working dir", __func__);
+        errno = ERANGE;
+        return nullptr;
+    }
+    strcpy(buf, CTX->cwd().c_str());
+    return buf;
+}
+
+char *get_current_dir_name(void) {
+    init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(get_current_dir_name);
+    }
+    CTX->log()->error("{}() not implemented", __func__);
+    errno = ENOTSUP;
+    return nullptr;
 }
 
 char *realpath(const char *path, char *resolved_path) {

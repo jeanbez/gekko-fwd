@@ -3,6 +3,7 @@
 #include <global/global_defs.hpp>
 #include <global/configure.hpp>
 #include <preload/preload.hpp>
+#include <preload/resolve.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/distributor.hpp>
 #include <preload/margo_ipc.hpp>
@@ -306,7 +307,7 @@ void init_preload() {
     init_passthrough_if_needed();
     init_logging();
     CTX->log()->debug("Initialized logging subsystem");
-    CTX->cwd(get_current_working_dir());
+    CTX->cwd(get_sys_cwd());
     CTX->log()->debug("Current working directory: '{}'", CTX->cwd());
     if (get_daemon_pid() == -1 || CTX->mountdir().empty()) {
         cerr << "ADA-FS daemon not running or mountdir could not be loaded. Check adafs_preload.log" << endl;

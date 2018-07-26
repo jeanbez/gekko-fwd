@@ -93,6 +93,10 @@ void* libc_readdir;
 void* libc_closedir;
 
 void* libc_chdir;
+void* libc_fchdir;
+
+void* libc_getcwd;
+void* libc_get_current_dir_name;
 
 void* libc_realpath;
 
@@ -185,6 +189,10 @@ void init_passthrough_() {
     libc_closedir = dlsym(libc, "closedir");
 
     libc_chdir = dlsym(libc, "chdir");
+    libc_fchdir = dlsym(libc, "fchdir");
+
+    libc_getcwd = dlsym(libc, "getcwd");
+    libc_get_current_dir_name = dlsym(libc, "get_current_dir_name");
 
     libc_realpath = dlsym(libc, "realpath");
 

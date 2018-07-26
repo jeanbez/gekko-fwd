@@ -69,7 +69,7 @@ class PreloadContext {
     void cwd(const std::string& path);
     const std::string& cwd() const;
 
-    bool relativize_path(std::string& path) const;
+    bool relativize_path(const char * raw_path, std::string& relative_path) const;
 
     const std::shared_ptr<OpenFileMap>& file_map() const;
 
