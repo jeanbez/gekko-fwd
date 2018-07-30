@@ -7,6 +7,7 @@
 #include <sys/unistd.h>
 
 #include <preload/preload.hpp>
+#include <preload/resolve.hpp>
 #include <preload/passthrough.hpp>
 #include <preload/adafs_functions.hpp>
 #include <preload/intcp_functions.hpp>
@@ -30,15 +31,16 @@ int open(const char* path, int flags, ...) {
         mode = static_cast<mode_t>(va_arg(vl, int));
         va_end(vl);
     }
-
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_open(rel_path, mode, flags);
-        }
+    if (!CTX->initialized()) {
+        return LIBC_FUNC(open, path, flags, mode);
     }
-    return (reinterpret_cast<decltype(&open)>(libc_open))(path, flags, mode);
+
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(open, rel_path.c_str(), flags, mode);
+    }
+    return adafs_open(rel_path, mode, flags);
 }
 
 #undef open64
@@ -66,35 +68,51 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
         va_end(vl);
     }
 
-    if(CTX->initialized()) {
-        std::string path(cpath);
-        CTX->log()->trace("{}() called with path {}", __func__, path);
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(openat, dirfd, cpath, flags, mode);
+    }
 
-        if(is_relative_path(path)) {
-            if(!(CTX->file_map()->exist(dirfd))) {
-                goto passthrough;
-            }
-            auto dir = CTX->file_map()->get_dir(dirfd);
-            if(dir == nullptr) {
-                CTX->log()->error("{}() dirfd is not a directory ", __func__);
-                errno = ENOTDIR;
-                return -1;
-            }
-            if(has_trailing_slash(path)){
-                path.pop_back();
-            }
-            return adafs_open(dir->path() + '/' + path, mode, flags);
-        } else {
-            // Path is absolute
-            assert(is_absolute_path(path));
+    if(cpath == nullptr || cpath[0] == '\0') {
+        CTX->log()->error("{}() path is invalid", __func__);
+        errno = EINVAL;
+        return -1;
+    }
 
-            if (CTX->relativize_path(path)) {
-                return adafs_open(path, mode, flags);
-            }
+    CTX->log()->trace("{}() called with fd: {}, path: {}", __func__, cpath);
+
+    std::string resolved;
+
+    if(cpath[0] != PSP) {
+        // cpath is relative
+
+        //TODO handle the case in which dirfd is AT_FDCWD
+        if(!(CTX->file_map()->exist(dirfd))) {
+            //TODO relative cpath could still lead to our FS
+            return LIBC_FUNC(openat, dirfd, cpath, flags, mode);
+        }
+
+        auto dir = CTX->file_map()->get_dir(dirfd);
+        if(dir == nullptr) {
+            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+            errno = ENOTDIR;
+            return -1;
+        }
+
+        std::string path = CTX->mountdir();
+        path.push_back(PSP);
+        path.append(dir->path());
+        path.push_back(PSP);
+        path.append(cpath);
+        if(resolve_path(path, resolved)) {
+            return adafs_open(resolved, mode, flags);
+        }
+    } else {
+        // Path is absolute
+        if (CTX->relativize_path(cpath, resolved)) {
+            return adafs_open(resolved, mode, flags);
         }
     }
-passthrough:
-    return (reinterpret_cast<decltype(&openat)>(libc_openat))(dirfd, cpath, flags, mode);
+    return LIBC_FUNC(openat, dirfd, resolved.c_str(), flags, mode);
 }
 
 int openat64(int dirfd, const char *path, int flags, ...) {
@@ -125,45 +143,47 @@ inline FILE* fd_to_file(const int fd){
 
 FILE* fopen(const char* path, const char* fmode) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            int flags = 0;
-            std::string str_mode(fmode);
-            if(str_mode == "r") {
-                flags = O_RDONLY;
-            } else if(str_mode == "r+") {
-                flags = O_RDWR;
-            } else if(str_mode == "w") {
-                flags = (O_WRONLY | O_CREAT | O_TRUNC);
-            } else {
-                CTX->log()->error("{}() stream open flags NOT SUPPORTED: '{}'", __func__, str_mode);
-                errno = ENOTSUP;
-                return nullptr;
-            }
-            mode_t mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-            auto fd = adafs_open(rel_path, mode, flags);
-            if(fd == -1){
-                return nullptr;
-            } else {
-                return fd_to_file(fd);
-            }
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(fopen, path, fmode);
     }
-    return (reinterpret_cast<decltype(&fopen)>(libc_fopen))(path, fmode);
+    CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(fopen, rel_path.c_str(), fmode);
+    }
+    int flags = 0;
+    std::string str_mode(fmode);
+    if(str_mode == "r") {
+        flags = O_RDONLY;
+    } else if(str_mode == "r+") {
+        flags = O_RDWR;
+    } else if(str_mode == "w") {
+        flags = (O_WRONLY | O_CREAT | O_TRUNC);
+    } else {
+        CTX->log()->error("{}() stream open flags NOT SUPPORTED: '{}'", __func__, str_mode);
+        errno = ENOTSUP;
+        return nullptr;
+    }
+    mode_t mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+    auto fd = adafs_open(rel_path, mode, flags);
+    if(fd == -1){
+        return nullptr;
+    } else {
+        return fd_to_file(fd);
+    }
 }
 
 FILE* fopen64(const char* path, const char* fmode) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return fopen(path, fmode);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(fopen64, path, fmode);
     }
-    return (reinterpret_cast<decltype(&fopen64)>(libc_fopen64))(path, fmode);
+    CTX->log()->trace("{}() called with path '{}' with mode '{}'", __func__, path, fmode);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(fopen64, rel_path.c_str(), fmode);
+    }
+    return fopen(path, fmode);
 }
 
 size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
@@ -404,93 +424,105 @@ int creat64(const char* path, mode_t mode) {
 
 int mkdir(const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {} with mode {}", __func__, path, mode);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_mk_node(rel_path, mode | S_IFDIR);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(mkdir, path, mode);
     }
-    return (reinterpret_cast<decltype(&mkdir)>(libc_mkdir))(path, mode);
+    CTX->log()->trace("{}() called with path {} with mode {}", __func__, path, mode);
+    std::string rel_path;
+    if(!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(mkdir, rel_path.c_str(), mode);
+    }
+    return adafs_mk_node(rel_path, mode | S_IFDIR);
 }
 
 int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with path {} with mode {} with dirfd {}", __func__, path, mode, dirfd);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
+        std::string rel_path;
+        if (CTX->relativize_path(path, rel_path)) {
             // not implemented
             CTX->log()->error("{}() not implemented.", __func__);
             errno = ENOTSUP;
             return -1;
         }
     }
-    return (reinterpret_cast<decltype(&mkdirat)>(libc_mkdirat))(dirfd, path, mode);
+    return LIBC_FUNC(mkdirat, dirfd, path, mode);
 }
 
 
 int unlink(const char* path) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_rm_node(rel_path);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(unlink, path);
     }
-    return (reinterpret_cast<decltype(&unlink)>(libc_unlink))(path);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(unlink, rel_path.c_str());
+    }
+    return adafs_rm_node(rel_path);
 }
 
 int unlinkat(int dirfd, const char *cpath, int flags) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        std::string path(cpath);
-        CTX->log()->trace("{}() called with path '{}' dirfd {}, flags {}", __func__, path, dirfd, flags);
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
+    }
 
-        if(is_relative_path(path)) {
-            if(!(CTX->file_map()->exist(dirfd))) {
-                goto passthrough;
-            }
-            auto dir = CTX->file_map()->get_dir(dirfd);
-            if(dir == nullptr) {
-                CTX->log()->error("{}() dirfd is not a directory ", __func__);
-                errno = ENOTDIR;
-                return -1;
-            }
-            if(has_trailing_slash(path)){
-                path.pop_back();
-            }
-            path = dir->path() + '/' + path;
-        } else {
-            // Path is absolute
-            assert(is_absolute_path(path));
+    if(cpath == nullptr || cpath[0] == '\0') {
+        CTX->log()->error("{}() path is invalid", __func__);
+        errno = EINVAL;
+        return -1;
+    }
 
-            if (!CTX->relativize_path(path)) {
-                goto passthrough;
-            }
+    CTX->log()->trace("{}() called with path '{}' dirfd {}, flags {}", __func__, cpath, dirfd, flags);
+
+    std::string resolved;
+
+    if(cpath[0] != PSP) {
+        if(!(CTX->file_map()->exist(dirfd))) {
+            //TODO relative cpath could still lead to our FS
+            return LIBC_FUNC(unlinkat, dirfd, cpath, flags);
         }
-
-        if(flags & AT_REMOVEDIR) {
-            return adafs_rmdir(path);
-        } else {
-            return adafs_rm_node(path);
+        auto dir = CTX->file_map()->get_dir(dirfd);
+        if(dir == nullptr) {
+            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+            errno = ENOTDIR;
+            return -1;
+        }
+        std::string path = CTX->mountdir();
+        path.push_back(PSP);
+        path.append(dir->path());
+        path.push_back(PSP);
+        path.append(cpath);
+        if(!resolve_path(path.c_str(), resolved)) {
+            return LIBC_FUNC(unlinkat, dirfd, resolved.c_str(), flags);
+        }
+    } else {
+        if (!CTX->relativize_path(cpath, resolved)) {
+            return LIBC_FUNC(unlinkat, dirfd, resolved.c_str(), flags);
         }
     }
-passthrough:
-    return (reinterpret_cast<decltype(&unlinkat)>(libc_unlinkat))(dirfd, cpath, flags);
+
+    if(flags & AT_REMOVEDIR) {
+        return adafs_rmdir(resolved);
+    } else {
+        return adafs_rm_node(resolved);
+    }
 }
 
 int rmdir(const char* path) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_rmdir(rel_path);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(rmdir, path);
     }
-    return (reinterpret_cast<decltype(&rmdir)>(libc_rmdir))(path);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(rmdir, rel_path.c_str());
+    }
+    return adafs_rmdir(rel_path);
 }
 
 int close(int fd) {
@@ -500,7 +532,7 @@ int close(int fd) {
         CTX->file_map()->remove(fd);
         return 0;
     }
-    return (reinterpret_cast<decltype(&close)>(libc_close))(fd);
+    return LIBC_FUNC(close, fd);
 }
 
 int __close(int fd) {
@@ -513,60 +545,74 @@ int remove(const char* path) {
 
 int access(const char* path, int mask) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called path {} mask {}", __func__, path, mask);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_access(rel_path, mask);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(access, path, mask);
     }
-    return (reinterpret_cast<decltype(&access)>(libc_access))(path, mask);
+    CTX->log()->trace("{}() called path {} mask {}", __func__, path, mask);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(access, rel_path.c_str(), mask);
+    }
+    return adafs_access(rel_path, mask);
 }
 
 int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        std::string path(cpath);
-        CTX->log()->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, path, mode, dirfd, flags);
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
+    }
 
-        if(is_relative_path(path)) {
-            if(!(CTX->file_map()->exist(dirfd))) {
-                goto passthrough;
-            }
-            auto dir = CTX->file_map()->get_dir(dirfd);
-            if(dir == nullptr) {
-                CTX->log()->error("{}() dirfd is not a directory ", __func__);
-                errno = ENOTDIR;
-                return -1;
-            }
-            if(has_trailing_slash(path)){
-                path.pop_back();
-            }
-            return adafs_access(dir->path() + '/' + path, mode);
-        } else {
-            // Path is absolute
-            assert(is_absolute_path(path));
+    if(cpath == nullptr || cpath[0] == '\0') {
+        CTX->log()->error("{}() path is invalid", __func__);
+        errno = EINVAL;
+        return -1;
+    }
 
-            if (CTX->relativize_path(path)) {
-                return adafs_access(path, mode);
-            }
+    CTX->log()->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, cpath, mode, dirfd, flags);
+
+    std::string resolved;
+
+    if(cpath[0] != PSP) {
+        if(!(CTX->file_map()->exist(dirfd))) {
+            //TODO relative cpath could still lead to our FS
+            return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
+        }
+
+        auto dir = CTX->file_map()->get_dir(dirfd);
+        if(dir == nullptr) {
+            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+            errno = ENOTDIR;
+            return -1;
+        }
+
+        std::string path = CTX->mountdir();
+        path.push_back(PSP);
+        path.append(dir->path());
+        path.push_back(PSP);
+        path.append(cpath);
+        if(resolve_path(path, resolved)) {
+            return adafs_access(resolved, mode);
+        }
+    } else {
+        if (CTX->relativize_path(cpath, resolved)) {
+            return adafs_access(resolved, mode);
         }
     }
-passthrough:
-    return (reinterpret_cast<decltype(&faccessat)>(libc_faccessat))(dirfd, cpath, mode, flags);
+    return LIBC_FUNC(faccessat, dirfd, resolved.c_str(), mode, flags);
 }
 
 
 int stat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat(rel_path, buf);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(stat, path, buf);
     }
-    return (reinterpret_cast<decltype(&stat)>(libc_stat))(path, buf);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(stat, rel_path.c_str(), buf);
+    }
+    return adafs_stat(rel_path, buf);
 }
 
 int fstat(int fd, struct stat* buf) __THROW {
@@ -578,42 +624,44 @@ int fstat(int fd, struct stat* buf) __THROW {
             return adafs_stat(path, buf);
         }
     }
-    return (reinterpret_cast<decltype(&fstat)>(libc_fstat))(fd, buf);
+    return LIBC_FUNC(fstat, fd, buf);
 }
 
 int lstat(const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            CTX->log()->warn("{}() No symlinks are supported. Stats will always target the given path", __func__);
-            return adafs_stat(rel_path, buf);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(lstat, path, buf);
     }
-    return (reinterpret_cast<decltype(&lstat)>(libc_lstat))(path, buf);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(lstat, rel_path.c_str(), buf);
+    }
+    CTX->log()->warn("{}() No symlinks are supported. Stats will always target the given path", __func__);
+    return adafs_stat(rel_path, buf);
 }
 
 int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat(rel_path, buf);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__xstat, ver, path, buf);
     }
-    return (reinterpret_cast<decltype(&__xstat)>(libc___xstat))(ver, path, buf);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(__xstat, ver, rel_path.c_str(), buf);
+    }
+    return adafs_stat(rel_path, buf);
 }
 
 int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        notsup_error_32_bit_func();
-        errno = ENOTSUP;
-        return -1;
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__xstat64, ver, path, buf);
     }
-    return (reinterpret_cast<decltype(&__xstat64)>(libc___xstat64))(ver, path, buf);
+    notsup_error_32_bit_func();
+    errno = ENOTSUP;
+    return -1;
 }
 
 int __fxstat(int ver, int fd, struct stat* buf) __THROW {
@@ -625,107 +673,129 @@ int __fxstat(int ver, int fd, struct stat* buf) __THROW {
             return adafs_stat(path, buf);
         }
     }
-    return (reinterpret_cast<decltype(&__fxstat)>(libc___fxstat))(ver, fd, buf);
+    return LIBC_FUNC(__fxstat, ver, fd, buf);
 }
 
 int __fxstatat(int ver, int dirfd, const char * cpath, struct stat * buf, int flags) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        std::string path(cpath);
-        CTX->log()->trace("{}() called with path '{}' and fd {}", __func__, path, dirfd);
-        if(flags & AT_EMPTY_PATH) {
-            CTX->log()->error("{}() AT_EMPTY_PATH flag not supported", __func__);
-            errno = ENOTSUP;
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
+    }
+
+    if(cpath == nullptr || cpath[0] == '\0') {
+        CTX->log()->error("{}() path is invalid", __func__);
+        errno = EINVAL;
+        return -1;
+    }
+
+    CTX->log()->trace("{}() called with path '{}' and fd {}", __func__, cpath, dirfd);
+
+    if(flags & AT_EMPTY_PATH) {
+        CTX->log()->error("{}() AT_EMPTY_PATH flag not supported", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+
+    std::string resolved;
+
+    if(cpath[0] != PSP) {
+        // cpath is relative
+        //TODO handle the case in which dirfd is AT_FDCWD
+        if(!(CTX->file_map()->exist(dirfd))) {
+            //TODO relative cpath could still lead to our FS
+            return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
+        }
+
+        auto dir = CTX->file_map()->get_dir(dirfd);
+        if(dir == nullptr) {
+            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+            errno = ENOTDIR;
             return -1;
         }
 
-        if(is_relative_path(path)) {
-            if((dirfd == AT_FDCWD) || !CTX->file_map()->exist(dirfd)) {
-                goto passthrough;
-            }
+        std::string path = CTX->mountdir();
+        path.push_back(PSP);
+        path.append(dir->path());
+        path.push_back(PSP);
+        path.append(cpath);
+        if(resolve_path(path, resolved)) {
+            return adafs_stat(resolved, buf);
+        }
+    } else {
+        // Path is absolute
 
-            auto dir = CTX->file_map()->get_dir(dirfd);
-            if(dir == nullptr) {
-                CTX->log()->error("{}() dirfd is not a directory ", __func__);
-                errno = ENOTDIR;
-                return -1;
-            }
-            if(has_trailing_slash(path)){
-                path.pop_back();
-            }
-            return adafs_stat(dir->path() + '/' + path, buf);
-
-        } else {
-            // Path is absolute
-            assert(is_absolute_path(path));
-
-            if (CTX->relativize_path(path)) {
-                return adafs_stat(path, buf);
-            }
+        if (CTX->relativize_path(cpath, resolved)) {
+            return adafs_stat(resolved, buf);
         }
     }
-passthrough:
-    return (reinterpret_cast<decltype(&__fxstatat)>(libc___fxstatat))(ver, dirfd, cpath, buf, flags);
+    return LIBC_FUNC(__fxstatat, ver, dirfd, cpath, buf, flags);
 }
 
 int __fxstatat64(int ver, int dirfd, const char * path, struct stat64 * buf, int flags) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        notsup_error_32_bit_func();
-        errno = ENOTSUP;
-        return -1;
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__fxstatat64, ver, dirfd, path, buf, flags);
     }
-    return (reinterpret_cast<decltype(&__fxstatat64)>(libc___fxstatat64))(ver, dirfd, path, buf, flags);
+
+    notsup_error_32_bit_func();
+    errno = ENOTSUP;
+    return -1;
 }
 
 int __fxstat64(int ver, int fd, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        notsup_error_32_bit_func();
-        errno = ENOTSUP;
-        return -1;
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__fxstat64, ver, fd, buf);
     }
-    return (reinterpret_cast<decltype(&__fxstat64)>(libc___fxstat64))(ver, fd, buf);
+
+    notsup_error_32_bit_func();
+    errno = ENOTSUP;
+    return -1;
 }
 
 int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_stat(rel_path, buf);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__lxstat, ver, path, buf);
     }
-    return (reinterpret_cast<decltype(&__lxstat)>(libc___lxstat))(ver, path, buf);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(__lxstat, ver, path, buf);
+    }
+    return adafs_stat(rel_path, buf);
 }
 
 int __lxstat64(int ver, const char* path, struct stat64* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        notsup_error_32_bit_func();
-        errno = ENOTSUP;
-        return -1;
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(__lxstat64, ver, path, buf);
     }
-    return (reinterpret_cast<decltype(&__lxstat64)>(libc___lxstat64))(ver, path, buf);
+
+    notsup_error_32_bit_func();
+    errno = ENOTSUP;
+    return -1;
 }
 
 int statfs(const char* path, struct statfs* buf) __THROW {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            // get information of the underlying fs.
-            // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
-            struct statfs realfs{};
-            auto ret = (reinterpret_cast<decltype(&statfs)>(libc_statfs))(CTX->mountdir().c_str(), &realfs);
-            if (ret != 0)
-                return ret;
-            return adafs_statfs(rel_path, buf, realfs);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(statfs, path, buf);
     }
-    return (reinterpret_cast<decltype(&statfs)>(libc_statfs))(path, buf);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(statfs, path, buf);
+    }
+
+    // get information of the underlying fs.
+    // Note, we explicitely call the real glibc statfs function to not intercept it again on the mountdir path
+    struct statfs realfs{};
+    auto ret = LIBC_FUNC(statfs, CTX->mountdir().c_str(), &realfs);
+    if (ret != 0) {
+        return ret;
+    }
+    return adafs_statfs(rel_path, buf, realfs);
 }
 
 int fstatfs(int fd, struct statfs* buf) {
@@ -932,15 +1002,16 @@ int fdatasync(int fd) {
 
 int truncate(const char* path, off_t length) {
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path: {}, offset: {}", __func__,
-                path, length);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            return adafs_truncate(rel_path, length);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(truncate, path, length);
     }
-    return (reinterpret_cast<decltype(&truncate)>(libc_truncate))(path, length);
+    CTX->log()->trace("{}() called with path: {}, offset: {}", __func__,
+            path, length);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(truncate, rel_path.c_str(), length);
+    }
+    return adafs_truncate(rel_path, length);
 }
 
 int ftruncate(int fd, off_t length) {
@@ -1058,18 +1129,20 @@ inline DIR* fd_to_dirp(const int fd){
 
 DIR* opendir(const char* path){
     init_passthrough_if_needed();
-    if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {}", __func__, path);
-        std::string rel_path(path);
-        if (CTX->relativize_path(rel_path)) {
-            auto fd = adafs_opendir(rel_path);
-            if(fd < 0){
-                return nullptr;
-            }
-            return fd_to_dirp(fd);
-        }
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(opendir, path);
     }
-    return (reinterpret_cast<decltype(&opendir)>(libc_opendir))(path);
+    CTX->log()->trace("{}() called with path {}", __func__, path);
+    std::string rel_path;
+    if(!CTX->relativize_path(path, rel_path)) {
+      return LIBC_FUNC(opendir, rel_path.c_str());
+    }
+
+    auto fd = adafs_opendir(rel_path);
+    if(fd < 0){
+        return nullptr;
+    }
+    return fd_to_dirp(fd);
 }
 
 DIR* fdopendir(int fd){
@@ -1087,7 +1160,7 @@ DIR* fdopendir(int fd){
             return fd_to_dirp(fd);
         }
     }
-    return (reinterpret_cast<decltype(&fdopendir)>(libc_fdopendir))(fd);
+    return LIBC_FUNC(fdopendir, fd);
 }
 
 struct dirent* intcp_readdir(DIR* dirp){
@@ -1102,7 +1175,7 @@ struct dirent* intcp_readdir(DIR* dirp){
             return adafs_readdir(fd);
         }
     }
-    return (reinterpret_cast<decltype(&readdir)>(libc_readdir))(dirp);
+    return LIBC_FUNC(readdir, dirp);
 }
 
 int intcp_closedir(DIR* dirp) {
@@ -1119,7 +1192,7 @@ int intcp_closedir(DIR* dirp) {
             return 0;
         }
     }
-    return (reinterpret_cast<decltype(&closedir)>(libc_closedir))(dirp);
+    return LIBC_FUNC(closedir, dirp);
 }
 
 int chdir(const char* path){
@@ -1213,23 +1286,31 @@ char *get_current_dir_name(void) {
 
 char *realpath(const char *path, char *resolved_path) {
     init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(realpath, path, resolved_path);
+    }
+
     CTX->log()->trace("{}() called with path {}", __func__, path);
-    std::string rel_path(path);
-    if (CTX->relativize_path(rel_path)) {
-        if(resolved_path != nullptr) {
-            CTX->log()->error("{}() use of user level buffer not supported", __func__);
-            errno = ENOTSUP;
-            return nullptr;
-        }
-        auto absolute_path = CTX->mountdir() + rel_path;
-        auto ret_ptr = static_cast<char*>(malloc(absolute_path.size() +  1));
-        if(ret_ptr == nullptr){
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(realpath, rel_path.c_str(), resolved_path);
+    }
+
+    auto absolute_path = CTX->mountdir() + rel_path;
+    if(absolute_path.size() >= PATH_MAX) {
+        errno = ENAMETOOLONG;
+        return nullptr;
+    }
+
+    if(resolved_path == nullptr) {
+        resolved_path = static_cast<char*>(malloc(absolute_path.size() +  1));
+        if(resolved_path == nullptr){
             CTX->log()->error("{}() failed to allocate buffer for called with path {}", __func__, path);
             errno = ENOMEM;
             return nullptr;
         }
-        strcpy(ret_ptr, absolute_path.c_str());
-        return ret_ptr;
     }
-    return (reinterpret_cast<decltype(&realpath)>(libc_realpath))(path, resolved_path);
+
+    strcpy(resolved_path, absolute_path.c_str());
+    return resolved_path;
 }
