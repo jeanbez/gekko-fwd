@@ -5,6 +5,10 @@
 #ifndef IFS_PASSTHROUGH_HPP
 #define IFS_PASSTHROUGH_HPP
 
+
+#define LIBC_FUNC(FNAME, ...) \
+    ((reinterpret_cast<decltype(&FNAME)>(libc_##FNAME))(__VA_ARGS__))
+
 // function pointer for preloading
 extern void* libc;
 
