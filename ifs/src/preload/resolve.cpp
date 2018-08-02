@@ -10,7 +10,7 @@
 
 
 bool resolve_path (const std::string& path, std::string& resolved) {
-    CTX->log()->debug("{}() path: '{}'", __func__, path, resolved);
+    CTX->log()->debug("{}() path: '{}'", __func__, path);
 
     struct stat st;
     const std::vector<std::string>& mnt_components = CTX->mountdir_components();
