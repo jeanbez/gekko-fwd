@@ -102,7 +102,6 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
         }
 
         std::string path = CTX->mountdir();
-        path.push_back(PSP);
         path.append(dir->path());
         path.push_back(PSP);
         path.append(cpath);
@@ -492,7 +491,6 @@ int unlinkat(int dirfd, const char *cpath, int flags) {
             return -1;
         }
         std::string path = CTX->mountdir();
-        path.push_back(PSP);
         path.append(dir->path());
         path.push_back(PSP);
         path.append(cpath);
@@ -586,7 +584,6 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
         }
 
         std::string path = CTX->mountdir();
-        path.push_back(PSP);
         path.append(dir->path());
         path.push_back(PSP);
         path.append(cpath);
@@ -714,7 +711,6 @@ int __fxstatat(int ver, int dirfd, const char * cpath, struct stat * buf, int fl
         }
 
         std::string path = CTX->mountdir();
-        path.push_back(PSP);
         path.append(dir->path());
         path.push_back(PSP);
         path.append(cpath);
