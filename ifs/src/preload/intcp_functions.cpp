@@ -1214,7 +1214,7 @@ int chdir(const char* path){
 
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
-    const char* new_path;
+    const char* fake_path;
     if (CTX->relativize_path(path, rel_path)) {
         //path falls in our namespace
         struct stat st;
@@ -1228,12 +1228,19 @@ int chdir(const char* path){
             errno = ENOTDIR;
             return -1;
         }
-        new_path = CTX->mountdir().c_str();
+        fake_path = CTX->mountdir().c_str();
+        //TODO get complete path from relativize_path instead of
+        // removing mountdir and then adding again here
+        rel_path.insert(0, CTX->mountdir());
+        if (has_trailing_slash(rel_path)) {
+            // open_dir is '/'
+            rel_path.pop_back();
+        }
     } else {
-        new_path = rel_path.c_str();
+        fake_path = rel_path.c_str();
     }
 
-    if(LIBC_FUNC(chdir, new_path)) {
+    if(LIBC_FUNC(chdir, fake_path)) {
         CTX->log()->error("{}() failed to change dir: {}",
                __func__, std::strerror(errno));
         return -1;
@@ -1259,7 +1266,19 @@ int fchdir(int fd) {
             errno = EBADF;
             return -1;
         }
-        CTX->cwd(open_dir->path());
+
+        if (LIBC_FUNC(chdir, CTX->mountdir().c_str())) {
+            CTX->log()->error("{}() failed to change dir: {}",
+                   __func__, std::strerror(errno));
+            return -1;
+        }
+
+        std::string new_path = CTX->mountdir() + open_dir->path();
+        if (has_trailing_slash(new_path)) {
+            // open_dir is '/'
+            new_path.pop_back();
+        }
+        CTX->cwd(new_path);
     } else {
         if(LIBC_FUNC(fchdir, fd) != 0) {
             CTX->log()->error("{}() failed to change dir: {}",
