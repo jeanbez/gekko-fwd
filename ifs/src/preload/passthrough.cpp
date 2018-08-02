@@ -87,6 +87,7 @@ void* libc_dup;
 void* libc_dup2;
 void* libc_dup3;
 
+void* libc_dirfd;
 void* libc_opendir;
 void* libc_fdopendir;
 void* libc_readdir;
@@ -183,6 +184,7 @@ void init_passthrough_() {
     libc_dup2 = dlsym(libc, "dup2");
     libc_dup3 = dlsym(libc, "dup3");
 
+    libc_dirfd = dlsym(libc, "dirfd");
     libc_opendir = dlsym(libc, "opendir");
     libc_fdopendir = dlsym(libc, "fdopendir");
     libc_readdir = dlsym(libc, "readdir");

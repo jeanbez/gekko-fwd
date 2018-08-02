@@ -1123,6 +1123,21 @@ inline DIR* fd_to_dirp(const int fd){
     return reinterpret_cast<DIR*>(fd);
 }
 
+int dirfd(DIR *dirp) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        if(dirp == nullptr){
+            errno = EINVAL;
+            return -1;
+        }
+        auto fd = dirp_to_fd(dirp);
+        if(CTX->file_map()->exist(fd)) {
+            return fd;
+        }
+    }
+    return LIBC_FUNC(dirfd, dirp);
+}
+
 DIR* opendir(const char* path){
     init_passthrough_if_needed();
     if(!CTX->initialized()) {
