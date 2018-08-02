@@ -78,7 +78,7 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
         return -1;
     }
 
-    CTX->log()->trace("{}() called with fd: {}, path: {}", __func__, cpath);
+    CTX->log()->trace("{}() called with fd: {}, path: {}, flags: {}, mode: {}", __func__, dirfd, cpath, flags, mode);
 
     std::string resolved;
 
