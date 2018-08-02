@@ -21,7 +21,7 @@ void inline notsup_error_32_bit_func(const char* func = __builtin_FUNCTION()) {
     CTX->log()->error("{}() is NOT SUPPORTED. According to glibc, this function should be called only on 32-bit machine", func);
 }
 
-int open(const char* path, int flags, ...) {
+int intcp_open(const char* path, int flags, ...) {
     init_passthrough_if_needed();
 
     mode_t mode = 0;
@@ -45,7 +45,7 @@ int open(const char* path, int flags, ...) {
 
 #undef open64
 
-int open64(const char* path, int flags, ...) {
+int intcp_open64(const char* path, int flags, ...) {
     init_passthrough_if_needed();
     mode_t mode = 0;
     if (flags & O_CREAT) {
@@ -54,10 +54,10 @@ int open64(const char* path, int flags, ...) {
         mode = va_arg(ap, mode_t);
         va_end(ap);
     }
-    return open(path, flags | O_LARGEFILE, mode);
+    return intcp_open(path, flags | O_LARGEFILE, mode);
 }
 
-int openat(int dirfd, const char *cpath, int flags, ...) {
+int intcp_openat(int dirfd, const char *cpath, int flags, ...) {
     init_passthrough_if_needed();
 
     mode_t mode = 0;
@@ -112,7 +112,7 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
     return LIBC_FUNC(openat, dirfd, resolved.c_str(), flags, mode);
 }
 
-int openat64(int dirfd, const char *path, int flags, ...) {
+int intcp_openat64(int dirfd, const char *path, int flags, ...) {
     init_passthrough_if_needed();
 
     mode_t mode = 0;
@@ -123,7 +123,7 @@ int openat64(int dirfd, const char *path, int flags, ...) {
         va_end(vl);
     }
 
-    return openat(dirfd, path, flags | O_LARGEFILE, mode);
+    return intcp_openat(dirfd, path, flags | O_LARGEFILE, mode);
 }
 
 /******  FILE OPS  ******/
