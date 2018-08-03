@@ -23,7 +23,7 @@ class MergeOperand {
     protected:
         std::string serialize_id() const;
         virtual std::string serialize_params() const = 0;
-        virtual const OperandID id() const = 0;
+        virtual OperandID id() const = 0;
 };
 
 class IncreaseSizeOperand: public MergeOperand {
@@ -38,7 +38,7 @@ class IncreaseSizeOperand: public MergeOperand {
         IncreaseSizeOperand(const size_t size, const bool append);
         IncreaseSizeOperand(const rdb::Slice& serialized_op);
 
-        const OperandID id() const override;
+        OperandID id() const override;
         std::string serialize_params() const override;
 };
 
@@ -49,7 +49,7 @@ class DecreaseSizeOperand: public MergeOperand {
         DecreaseSizeOperand(const size_t size);
         DecreaseSizeOperand(const rdb::Slice& serialized_op);
 
-        const OperandID id() const override;
+        OperandID id() const override;
         std::string serialize_params() const override;
 };
 
@@ -58,7 +58,7 @@ class CreateOperand: public MergeOperand {
         std::string metadata;
         CreateOperand(const std::string& metadata);
 
-        const OperandID id() const override;
+        OperandID id() const override;
         std::string serialize_params() const override;
 };
 

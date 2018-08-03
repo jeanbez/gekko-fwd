@@ -51,7 +51,7 @@ public:
 
     void pos(off64_t pos_);
 
-    const bool get_flag(OpenFile_flags flag);
+    bool get_flag(OpenFile_flags flag);
 
     void set_flag(OpenFile_flags flag, bool value);
 

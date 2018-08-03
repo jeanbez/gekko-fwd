@@ -52,7 +52,7 @@ void OpenFile::pos(off64_t pos_) {
     OpenFile::pos_ = pos_;
 }
 
-const bool OpenFile::get_flag(OpenFile_flags flag) {
+bool OpenFile::get_flag(OpenFile_flags flag) {
     lock_guard<mutex> lock(pos_mutex_);
     return flags_[to_underlying(flag)];
 }

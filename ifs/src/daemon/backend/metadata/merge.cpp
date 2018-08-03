@@ -44,7 +44,7 @@ IncreaseSizeOperand::IncreaseSizeOperand(const rdb::Slice& serialized_op){
     assert(chrs_parsed + 1 == serialized_op.size());
 }
 
-const OperandID IncreaseSizeOperand::id() const {
+OperandID IncreaseSizeOperand::id() const {
     return OperandID::increase_size;
 }
 
@@ -71,7 +71,7 @@ DecreaseSizeOperand::DecreaseSizeOperand(const rdb::Slice& serialized_op){
     assert(read == serialized_op.size());
 }
 
-const OperandID DecreaseSizeOperand::id() const {
+OperandID DecreaseSizeOperand::id() const {
     return OperandID::decrease_size;
 }
 
@@ -82,7 +82,7 @@ std::string DecreaseSizeOperand::serialize_params() const {
 
 CreateOperand::CreateOperand(const std::string& metadata): metadata(metadata) {}
 
-const OperandID CreateOperand::id() const{
+OperandID CreateOperand::id() const{
     return OperandID::create;
 }
 
