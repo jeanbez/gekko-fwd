@@ -436,7 +436,6 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         ABT_eventual_wait(task_eventuals[chnk_id_curr], (void**) &task_read_size);
 
         assert(task_read_size != nullptr);
-        assert(*task_read_size >= 0);
 
         if(*task_read_size == 0){
             ADAFS_DATA->spdlogger()->warn("{}() Read task for chunk {} returned 0 bytes", __func__, chnk_id_curr);

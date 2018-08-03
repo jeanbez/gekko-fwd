@@ -130,8 +130,8 @@ void destroy_enviroment() {
 }
 
 bool init_io_tasklet_pool() {
+    assert(DAEMON_IO_XSTREAMS >= 0);
     unsigned int xstreams_num = DAEMON_IO_XSTREAMS;
-    assert(xstreams_num >= 0);
 
     //retrieve the pool of the just created scheduler
     ABT_pool pool;
