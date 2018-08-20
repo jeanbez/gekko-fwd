@@ -570,7 +570,13 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
 
     std::string resolved;
 
-    if(cpath[0] != PSP) {
+    if((cpath[0] == PSP) || (dirfd == AT_FDCWD)) {
+        // cpath is absolute or relative to CWD
+        if (CTX->relativize_path(cpath, resolved)) {
+            return adafs_access(resolved, mode);
+        }
+    } else {
+        // cpath is relative
         if(!(CTX->file_map()->exist(dirfd))) {
             //TODO relative cpath could still lead to our FS
             return LIBC_FUNC(faccessat, dirfd, cpath, mode, flags);
@@ -588,10 +594,6 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
         path.push_back(PSP);
         path.append(cpath);
         if(resolve_path(path, resolved)) {
-            return adafs_access(resolved, mode);
-        }
-    } else {
-        if (CTX->relativize_path(cpath, resolved)) {
             return adafs_access(resolved, mode);
         }
     }
