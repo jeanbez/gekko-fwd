@@ -1206,6 +1206,83 @@ int intcp_closedir(DIR* dirp) {
     return LIBC_FUNC(closedir, dirp);
 }
 
+int chmod(const char *path, mode_t mode) {
+    init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(chmod, path, mode);
+    }
+
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(chmod, rel_path.c_str(), mode);
+    }
+    CTX->log()->warn("{}() operation not supported", __func__);
+    errno = ENOTSUP;
+    return -1;
+}
+
+int fchmod(int fd, mode_t mode) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called  [fd: {}, mode: {}]", __func__, fd, mode);
+        if (CTX->file_map()->exist(fd)) {
+            CTX->log()->warn("{}() operation not supported", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return LIBC_FUNC(fchmod, fd, mode);
+}
+
+int fchmodat(int dirfd, const char *cpath, mode_t mode, int flags) {
+    init_passthrough_if_needed();
+    if(!CTX->initialized()) {
+        return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
+    }
+
+    if(cpath == nullptr || cpath[0] == '\0') {
+        CTX->log()->error("{}() path is invalid", __func__);
+        errno = EINVAL;
+        return -1;
+    }
+
+    CTX->log()->trace("{}() called path '{}', mode {}, dirfd {}, flags {}", __func__, cpath, mode, dirfd, flags);
+
+    std::string resolved;
+
+    if(cpath[0] != PSP) {
+        if(!(CTX->file_map()->exist(dirfd))) {
+            //TODO relative cpath could still lead to our FS
+            return LIBC_FUNC(fchmodat, dirfd, cpath, mode, flags);
+        }
+
+        auto dir = CTX->file_map()->get_dir(dirfd);
+        if(dir == nullptr) {
+            CTX->log()->error("{}() dirfd is not a directory ", __func__);
+            errno = ENOTDIR;
+            return -1;
+        }
+
+        std::string path = CTX->mountdir();
+        path.append(dir->path());
+        path.push_back(PSP);
+        path.append(cpath);
+        if(resolve_path(path, resolved)) {
+            CTX->log()->warn("{}() operation not supported", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    } else {
+        if (CTX->relativize_path(cpath, resolved)) {
+            CTX->log()->warn("{}() operation not supported", __func__);
+            errno = ENOTSUP;
+            return -1;
+        }
+    }
+    return LIBC_FUNC(fchmodat, dirfd, resolved.c_str(), mode, flags);
+}
+
 int chdir(const char* path){
     init_passthrough_if_needed();
     if(!CTX->initialized()) {

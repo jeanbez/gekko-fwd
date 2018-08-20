@@ -93,6 +93,10 @@ void* libc_fdopendir;
 void* libc_readdir;
 void* libc_closedir;
 
+void* libc_chmod;
+void* libc_fchmod;
+void* libc_fchmodat;
+
 void* libc_chdir;
 void* libc_fchdir;
 
@@ -189,6 +193,10 @@ void init_passthrough_() {
     libc_fdopendir = dlsym(libc, "fdopendir");
     libc_readdir = dlsym(libc, "readdir");
     libc_closedir = dlsym(libc, "closedir");
+
+    libc_chmod = dlsym(libc, "chmod");
+    libc_fchmod = dlsym(libc, "fchmod");
+    libc_fchmodat = dlsym(libc, "fchmodat");
 
     libc_chdir = dlsym(libc, "chdir");
     libc_fchdir = dlsym(libc, "fchdir");

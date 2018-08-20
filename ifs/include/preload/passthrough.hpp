@@ -92,6 +92,10 @@ extern void* libc_fdopendir;
 extern void* libc_readdir;
 extern void* libc_closedir;
 
+extern void* libc_chmod;
+extern void* libc_fchmod;
+extern void* libc_fchmodat;
+
 extern void* libc_chdir;
 extern void* libc_fchdir;
 
