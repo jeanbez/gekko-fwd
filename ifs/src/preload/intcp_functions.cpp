@@ -656,6 +656,11 @@ int __xstat64(int ver, const char* path, struct stat64* buf) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(__xstat64, ver, path, buf);
     }
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
+    std::string rel_path;
+    if (!CTX->relativize_path(path, rel_path)) {
+        return LIBC_FUNC(__xstat64, ver, rel_path.c_str(), buf);
+    }
     notsup_error_32_bit_func();
     errno = ENOTSUP;
     return -1;
