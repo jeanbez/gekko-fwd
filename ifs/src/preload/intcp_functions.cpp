@@ -1372,11 +1372,20 @@ char *getcwd(char *buf, size_t size) {
         return LIBC_FUNC(getcwd, buf, size);
     }
     CTX->log()->trace("{}() called with size {}", __func__, size);
-    if(CTX->cwd().size() + 1 > size) {
+
+    if(size == 0) {
+        buf = static_cast<char*>(malloc(CTX->cwd().size() +  1));
+        if(buf == nullptr){
+            CTX->log()->error("{}() failed to allocate buffer of size {}", __func__, CTX->cwd().size());
+            errno = ENOMEM;
+            return nullptr;
+        }
+    } else if(CTX->cwd().size() + 1 > size) {
         CTX->log()->error("{}() buffer too small to host current working dir", __func__);
         errno = ERANGE;
         return nullptr;
     }
+
     strcpy(buf, CTX->cwd().c_str());
     return buf;
 }
