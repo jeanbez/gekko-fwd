@@ -1298,8 +1298,8 @@ int chdir(const char* path){
 
     CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
-    const char* fake_path;
-    if (CTX->relativize_path(path, rel_path)) {
+    bool internal = CTX->relativize_path(path, rel_path);
+    if (internal) {
         //path falls in our namespace
         struct stat st;
         if(adafs_stat(rel_path, &st) != 0) {
@@ -1312,7 +1312,6 @@ int chdir(const char* path){
             errno = ENOTDIR;
             return -1;
         }
-        fake_path = CTX->mountdir().c_str();
         //TODO get complete path from relativize_path instead of
         // removing mountdir and then adding again here
         rel_path.insert(0, CTX->mountdir());
@@ -1320,17 +1319,12 @@ int chdir(const char* path){
             // open_dir is '/'
             rel_path.pop_back();
         }
-    } else {
-        fake_path = rel_path.c_str();
     }
-
-    if(LIBC_FUNC(chdir, fake_path)) {
-        CTX->log()->error("{}() failed to change dir: {}",
-               __func__, std::strerror(errno));
+    try {
+        set_cwd(rel_path, internal);
+    } catch (const std::system_error& se) {
         return -1;
     }
-
-    CTX->cwd(rel_path);
     return 0;
 }
 
@@ -1351,23 +1345,22 @@ int fchdir(int fd) {
             return -1;
         }
 
-        if (LIBC_FUNC(chdir, CTX->mountdir().c_str())) {
-            CTX->log()->error("{}() failed to change dir: {}",
-                   __func__, std::strerror(errno));
-            return -1;
-        }
-
         std::string new_path = CTX->mountdir() + open_dir->path();
         if (has_trailing_slash(new_path)) {
             // open_dir is '/'
             new_path.pop_back();
         }
-        CTX->cwd(new_path);
+        try {
+            set_cwd(new_path, true);
+        } catch (const std::system_error& se) {
+            return -1;
+        }
     } else {
         if(LIBC_FUNC(fchdir, fd) != 0) {
             CTX->log()->error("{}() failed to change dir: {}",
                     __func__, std::strerror(errno));
         }
+        unset_env_cwd();
         CTX->cwd(get_sys_cwd());
     }
     return 0;

@@ -109,3 +109,56 @@ std::string get_sys_cwd() {
     }
     return {temp};
 }
+
+void set_sys_cwd(const std::string& path) {
+    CTX->log()->debug("{}() to '{}'", __func__, path);
+    if (LIBC_FUNC(chdir, path.c_str())) {
+        CTX->log()->error("{}() failed to set system current working directory: {}",
+                __func__, std::strerror(errno));
+        throw std::system_error(errno,
+                                std::system_category(),
+                                "Failed to set system current working directory");
+    }
+}
+
+void set_env_cwd(const std::string& path) {
+    CTX->log()->debug("{}() to '{}'", __func__, path);
+    if(setenv("ADAFS_CWD", path.c_str(), 1)) {
+        CTX->log()->error("{}() failed to set environment current working directory: {}",
+                __func__, std::strerror(errno));
+        throw std::system_error(errno,
+                                std::system_category(),
+                                "Failed to set environment current working directory");
+    }
+}
+
+void unset_env_cwd() {
+    CTX->log()->debug("{}()", __func__);
+    if(unsetenv("ADAFS_CWD")) {
+        CTX->log()->error("{}() failed to unset environment current working directory: {}",
+                __func__, std::strerror(errno));
+        throw std::system_error(errno,
+                                std::system_category(),
+                                "Failed to unset environment current working directory");
+    }
+}
+
+void init_cwd() {
+    const char* env_cwd = std::getenv("ADAFS_CWD");
+    if (env_cwd != nullptr) {
+        CTX->cwd(env_cwd);
+    } else {
+        CTX->cwd(get_sys_cwd());
+    }
+}
+
+void set_cwd(const std::string& path, bool internal) {
+    if(internal) {
+        set_sys_cwd(CTX->mountdir());
+        set_env_cwd(path);
+    } else {
+        set_sys_cwd(path);
+        unset_env_cwd();
+    }
+    CTX->cwd(path);
+}
