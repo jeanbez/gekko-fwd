@@ -1373,12 +1373,12 @@ int chdir(const char* path){
         //path falls in our namespace
         struct stat st;
         if(adafs_stat(rel_path, &st) != 0) {
-            CTX->log()->error("{}() path does not exists");
+            CTX->log()->error("{}() path does not exists", __func__);
             errno = ENOENT;
             return -1;
         }
         if(!S_ISDIR(st.st_mode)) {
-            CTX->log()->error("{}() path is not a directory");
+            CTX->log()->error("{}() path is not a directory", __func__);
             errno = ENOTDIR;
             return -1;
         }
