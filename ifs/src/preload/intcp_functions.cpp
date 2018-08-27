@@ -189,12 +189,8 @@ size_t intcp_fread(void *ptr, size_t size, size_t nmemb, FILE *stream) {
         auto fd = file_to_fd(stream);
         if (CTX->file_map()->exist(fd)) {
             CTX->log()->trace("{}() called with fd {}", __func__, fd);
-            auto adafs_fd = CTX->file_map()->get(fd);
-            auto pos = adafs_fd->pos(); //retrieve the current offset
-            auto ret = adafs_pread_ws(fd, ptr, size*nmemb, pos);
+            auto ret = adafs_read(fd, ptr, size*nmemb);
             if (ret > 0) {
-                // Update offset in file descriptor in the file map
-                adafs_fd->pos(pos + ret);
                 return ret / size;
             }
             return ret;
@@ -916,13 +912,7 @@ ssize_t read(int fd, void* buf, size_t count) {
     if(CTX->initialized()) {
         CTX->log()->trace("{}() called with fd {}, count {}", __func__, fd, count);
         if (CTX->file_map()->exist(fd)) {
-            auto adafs_fd = CTX->file_map()->get(fd);
-            auto pos = adafs_fd->pos(); //retrieve the current offset
-            auto ret = adafs_pread_ws(fd, buf, count, pos);
-            // Update offset in file descriptor in the file map
-            if (ret > 0) {
-                adafs_fd->pos(pos + ret);
-            }
+            auto ret = adafs_read(fd, buf, count);
             CTX->log()->trace("{}() returning {}", __func__, ret);
             return ret;
         }

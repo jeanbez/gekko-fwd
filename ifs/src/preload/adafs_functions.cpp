@@ -309,6 +309,17 @@ ssize_t adafs_pwrite_ws(int fd, const void* buf, size_t count, off64_t offset) {
     return ret; // return written size or -1 as error
 }
 
+ssize_t adafs_read(int fd, void* buf, size_t count) {
+            auto adafs_fd = CTX->file_map()->get(fd);
+            auto pos = adafs_fd->pos(); //retrieve the current offset
+            auto ret = adafs_pread_ws(fd, buf, count, pos);
+            // Update offset in file descriptor in the file map
+            if (ret > 0) {
+                adafs_fd->pos(pos + ret);
+            }
+            return ret;
+}
+
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     init_ld_env_if_needed();
     auto adafs_fd = CTX->file_map()->get(fd);
