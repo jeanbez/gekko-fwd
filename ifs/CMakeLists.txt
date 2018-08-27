@@ -124,7 +124,7 @@ target_link_libraries(RocksDB
     ${ZLIB_LIBRARIES}
     ${BZIP2_LIBRARIES}
     ${ZSTD_LIBRARIES}
-    ${LZ4_LIBRARY}
+    ${LZ4_LIBRARIES}
 )
 
 if(${JeMalloc_FOUND})
