@@ -150,6 +150,8 @@ FILE* fopen(const char* path, const char* fmode) {
     }
     int flags = 0;
     std::string str_mode(fmode);
+    str_mode.erase(std::remove(str_mode.begin(), str_mode.end(), 'b'), str_mode.end());
+
     if(str_mode == "r") {
         flags = O_RDONLY;
     } else if(str_mode == "r+") {
