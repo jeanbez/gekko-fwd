@@ -1390,6 +1390,57 @@ char *get_current_dir_name(void) {
     return nullptr;
 }
 
+
+int link(const char *oldpath, const char *newpath) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
+               __func__, oldpath, newpath);
+        CTX->log()->error("{}() not implemented", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+    return LIBC_FUNC(link, oldpath, newpath);
+}
+
+int linkat(int olddirfd, const char *oldpath,
+        int newdirfd, const char *newpath, int flags) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called [olddirfd: '{}', oldpath: '{}',\
+                newdirfd: '{}', newpath: '{}', flags: '{}']",
+                __func__, olddirfd, oldpath, newdirfd, newpath, flags);
+        CTX->log()->error("{}() not implemented", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+    return LIBC_FUNC(linkat, olddirfd, oldpath, newdirfd, newpath, flags);
+}
+
+int symlink(const char *oldpath, const char *newpath) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
+               __func__, oldpath, newpath);
+        CTX->log()->error("{}() not implemented", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+    return LIBC_FUNC(symlink, oldpath, newpath);
+}
+
+int symlinkat(const char *oldpath, int fd, const char *newpath) {
+    init_passthrough_if_needed();
+    if(CTX->initialized()) {
+        CTX->log()->trace("{}() called [oldpath: '{}', newpath: '{}']",
+               __func__, oldpath, newpath);
+        CTX->log()->error("{}() not implemented", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+    return LIBC_FUNC(symlinkat, oldpath, fd, newpath);
+}
+
 char *realpath(const char *path, char *resolved_path) {
     init_passthrough_if_needed();
     if(!CTX->initialized()) {

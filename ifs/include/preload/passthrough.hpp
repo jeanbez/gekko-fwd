@@ -102,6 +102,11 @@ extern void* libc_fchdir;
 extern void* libc_getcwd;
 extern void* libc_get_current_dir_name;
 
+extern void* libc_link;
+extern void* libc_linkat;
+extern void* libc_symlink;
+extern void* libc_symlinkat;
+
 extern void* libc_realpath;
 
 void init_passthrough_if_needed();
