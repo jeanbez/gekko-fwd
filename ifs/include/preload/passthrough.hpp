@@ -35,6 +35,11 @@ extern void* libc_setvbuf;
 
 extern void* libc_putc;
 extern void* libc_fputc;
+extern void* libc_fputs;
+extern void* libc_getc;
+extern void* libc_fgetc;
+extern void* libc_fgets;
+extern void* libc_ungetc;
 
 extern void* libc_mkdir;
 extern void* libc_mkdirat;

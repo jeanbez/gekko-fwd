@@ -35,6 +35,11 @@ void* libc_setvbuf;
 
 void* libc_putc;
 void* libc_fputc;
+void* libc_fputs;
+void* libc_getc;
+void* libc_fgetc;
+void* libc_fgets;
+void* libc_ungetc;
 
 void* libc_mkdir;
 void* libc_mkdirat;
@@ -141,6 +146,11 @@ void init_passthrough_() {
 
     libc_putc = dlsym(libc, "putc");
     libc_fputc = dlsym(libc, "fputc");
+    libc_fputs = dlsym(libc, "fputs");
+    libc_getc = dlsym(libc, "getc");
+    libc_fgetc = dlsym(libc, "fgetc");
+    libc_fgets = dlsym(libc, "fgets");
+    libc_ungetc = dlsym(libc, "ungetc");
 
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");

@@ -377,7 +377,7 @@ int putc(int c, FILE *stream) {
             return EOF;
         }
     }
-    return (reinterpret_cast<decltype(&putc)>(libc_putc))(c, stream);
+    return LIBC_FUNC(putc, c, stream);
 }
 
 int fputc(int c, FILE *stream) {
@@ -390,7 +390,85 @@ int fputc(int c, FILE *stream) {
             return EOF;
         }
     }
-    return (reinterpret_cast<decltype(&fputc)>(libc_fputc))(c, stream);
+    return LIBC_FUNC(fputc, c, stream);
+}
+
+int fputs(const char *s, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return LIBC_FUNC(fputs, s, stream);
+}
+
+int getc(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return LIBC_FUNC(getc, stream);
+}
+
+int fgetc(FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return LIBC_FUNC(fgetc, stream);
+}
+
+char* fgets(char* s, int size, FILE* stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() [fd: {}, size: {}]", __func__, fd, size);
+            auto ret = adafs_read(fd, s, size - 1);
+            CTX->log()->debug("{}() read {} bytes", __func__, ret);
+            if(ret > 0) {
+                char* nl_ptr = static_cast<char*>(memchr(s, '\n', size - 1));
+                assert((nl_ptr - s) < size);
+                if(nl_ptr != nullptr) {
+                    CTX->log()->debug("{}() found new line char at {}", __func__, (nl_ptr - s));
+                    nl_ptr[1] = '\0';
+                } else {
+                    s[size - 1] = '\0';
+                }
+                return s;
+            } else {
+                return nullptr;
+            }
+        }
+    }
+    return LIBC_FUNC(fgets, s, size, stream);
+}
+
+int ungetc(int c, FILE *stream) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->error("{}() NOT SUPPORTED", __func__);
+            errno = ENOTSUP;
+            return EOF;
+        }
+    }
+    return LIBC_FUNC(ungetc, c, stream);
 }
 
 /******  FILE OPS  ******/
