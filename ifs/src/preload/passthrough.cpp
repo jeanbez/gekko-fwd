@@ -41,6 +41,8 @@ void* libc_fgetc;
 void* libc_fgets;
 void* libc_ungetc;
 
+void* libc_fseek;
+
 void* libc_mkdir;
 void* libc_mkdirat;
 void* libc_unlink;
@@ -151,6 +153,8 @@ void init_passthrough_() {
     libc_fgetc = dlsym(libc, "fgetc");
     libc_fgets = dlsym(libc, "fgets");
     libc_ungetc = dlsym(libc, "ungetc");
+
+    libc_fseek = dlsym(libc, "fseek");
 
     libc_mkdir = dlsym(libc, "mkdir");
     libc_mkdirat = dlsym(libc, "mkdirat");

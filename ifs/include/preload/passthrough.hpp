@@ -41,6 +41,8 @@ extern void* libc_fgetc;
 extern void* libc_fgets;
 extern void* libc_ungetc;
 
+extern void* libc_fseek;
+
 extern void* libc_mkdir;
 extern void* libc_mkdirat;
 extern void* libc_unlink;

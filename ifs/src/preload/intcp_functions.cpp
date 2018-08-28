@@ -479,6 +479,22 @@ int ungetc(int c, FILE *stream) {
     return LIBC_FUNC(ungetc, c, stream);
 }
 
+int fseek(FILE *stream, long offset, int whence) {
+    init_passthrough_if_needed();
+    if(CTX->initialized() && (stream != nullptr)) {
+        auto fd = file_to_fd(stream);
+        if(CTX->file_map()->exist(fd)) {
+            CTX->log()->trace("{}() called [fd: {}, offset: {}, whence: {}");
+            if(adafs_lseek(fd, offset, whence) == -1) {
+                return -1;
+            } else {
+                return 0;
+            }
+        }
+    }
+    return LIBC_FUNC(fseek, stream, offset, whence);
+}
+
 /******  FILE OPS  ******/
 
 #undef creat
