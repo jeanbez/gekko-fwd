@@ -158,6 +158,12 @@ FILE* fopen(const char* path, const char* fmode) {
         flags = O_RDWR;
     } else if(str_mode == "w") {
         flags = (O_WRONLY | O_CREAT | O_TRUNC);
+    } else if(str_mode == "w+") {
+        flags = (O_RDWR | O_CREAT | O_TRUNC);
+    } else if(str_mode == "a") {
+        flags = (O_WRONLY | O_CREAT | O_APPEND);
+    } else if(str_mode == "a+") {
+        flags = (O_RDWR | O_CREAT | O_APPEND);
     } else {
         CTX->log()->error("{}() stream open flags NOT SUPPORTED: '{}'", __func__, str_mode);
         errno = ENOTSUP;
