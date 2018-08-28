@@ -20,6 +20,12 @@ int adafs_open(const std::string& path, mode_t mode, int flags) {
         return -1;
     }
 
+    if(flags & O_APPEND){
+        CTX->log()->error("{}() `O_APPEND` flag is not supported", __func__);
+        errno = ENOTSUP;
+        return -1;
+    }
+
     bool exists = true;
     struct stat st;
     err = adafs_stat(path, &st);
