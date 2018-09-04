@@ -82,10 +82,13 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
 
     std::string resolved;
 
-    if(cpath[0] != PSP) {
+    if((cpath[0] == PSP) || (dirfd == AT_FDCWD)) {
+        // cpath is absolute or relative to CWD
+        if (CTX->relativize_path(cpath, resolved)) {
+            return adafs_open(resolved, mode, flags);
+        }
+    } else {
         // cpath is relative
-
-        //TODO handle the case in which dirfd is AT_FDCWD
         if(!(CTX->file_map()->exist(dirfd))) {
             //TODO relative cpath could still lead to our FS
             return LIBC_FUNC(openat, dirfd, cpath, flags, mode);
@@ -104,11 +107,6 @@ int openat(int dirfd, const char *cpath, int flags, ...) {
         path.push_back(PSP);
         path.append(cpath);
         if(resolve_path(path, resolved)) {
-            return adafs_open(resolved, mode, flags);
-        }
-    } else {
-        // Path is absolute
-        if (CTX->relativize_path(cpath, resolved)) {
             return adafs_open(resolved, mode, flags);
         }
     }
