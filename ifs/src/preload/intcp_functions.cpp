@@ -35,7 +35,7 @@ int open(const char* path, int flags, ...) {
         return LIBC_FUNC(open, path, flags, mode);
     }
 
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(open, rel_path.c_str(), flags, mode);
@@ -407,7 +407,7 @@ int fputc(int c, FILE *stream) {
 int creat(const char* path, mode_t mode) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {} with mode {}", __func__, path, mode);
+        CTX->log()->trace("{}() called with path '{}', mode '{}'", __func__, path, mode);
     }
     return open(path, O_CREAT | O_WRONLY | O_TRUNC, mode);
 }
@@ -417,7 +417,7 @@ int creat(const char* path, mode_t mode) {
 int creat64(const char* path, mode_t mode) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {} with mode {}", __func__, path, mode);
+        CTX->log()->trace("{}() called with path '{}', mode '{}'", __func__, path, mode);
     }
     return open(path, O_CREAT | O_WRONLY | O_TRUNC | O_LARGEFILE, mode);
 }
@@ -427,18 +427,20 @@ int mkdir(const char* path, mode_t mode) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(mkdir, path, mode);
     }
-    CTX->log()->trace("{}() called with path {} with mode {}", __func__, path, mode);
+    CTX->log()->trace("{}() called with path '{}', mode '{}'", __func__, path, mode);
     std::string rel_path;
     if(!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(mkdir, rel_path.c_str(), mode);
     }
-    return adafs_mk_node(rel_path, mode | S_IFDIR);
+    auto ret = adafs_mk_node(rel_path, mode | S_IFDIR);
+    CTX->log()->trace("{}() ret {}", __func__, ret);
+    return ret;
 }
 
 int mkdirat(int dirfd, const char* path, mode_t mode) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {} with mode {} with dirfd {}", __func__, path, mode, dirfd);
+        CTX->log()->trace("{}() called with path '{}', mode {}, dirfd {}", __func__, path, mode, dirfd);
         std::string rel_path;
         if (CTX->relativize_path(path, rel_path)) {
             // not implemented
@@ -456,7 +458,7 @@ int unlink(const char* path) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(unlink, path);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(unlink, rel_path.c_str());
@@ -517,7 +519,7 @@ int rmdir(const char* path) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(rmdir, path);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(rmdir, rel_path.c_str());
@@ -548,7 +550,7 @@ int access(const char* path, int mask) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(access, path, mask);
     }
-    CTX->log()->trace("{}() called path {} mask {}", __func__, path, mask);
+    CTX->log()->trace("{}() called path '{}', mask {}", __func__, path, mask);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(access, rel_path.c_str(), mask);
@@ -568,7 +570,7 @@ int faccessat(int dirfd, const char* cpath, int mode, int flags) __THROW {
         return -1;
     }
 
-    CTX->log()->trace("{}() called path {} mode {} dirfd {} flags {}", __func__, cpath, mode, dirfd, flags);
+    CTX->log()->trace("{}() called path '{}', mode {}, dirfd {}, flags {}", __func__, cpath, mode, dirfd, flags);
 
     std::string resolved;
 
@@ -607,7 +609,7 @@ int stat(const char* path, struct stat* buf) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(stat, path, buf);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(stat, rel_path.c_str(), buf);
@@ -632,7 +634,7 @@ int lstat(const char* path, struct stat* buf) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(lstat, path, buf);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(lstat, rel_path.c_str(), buf);
@@ -646,7 +648,7 @@ int __xstat(int ver, const char* path, struct stat* buf) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(__xstat, ver, path, buf);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(__xstat, ver, rel_path.c_str(), buf);
@@ -758,7 +760,7 @@ int __lxstat(int ver, const char* path, struct stat* buf) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(__lxstat, ver, path, buf);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(__lxstat, ver, path, buf);
@@ -782,7 +784,7 @@ int statfs(const char* path, struct statfs* buf) __THROW {
     if(!CTX->initialized()) {
         return LIBC_FUNC(statfs, path, buf);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(statfs, path, buf);
@@ -952,7 +954,7 @@ ssize_t pread64(int fd, void* buf, size_t count, __off64_t offset) {
 off_t lseek(int fd, off_t offset, int whence) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
+        CTX->log()->trace("{}() called with path '{}', mode {}", __func__, fd, offset, whence);
         if (CTX->file_map()->exist(fd)) {
             auto off_ret = adafs_lseek(fd, static_cast<off64_t>(offset), whence);
             if (off_ret > std::numeric_limits<off_t>::max()) {
@@ -970,7 +972,7 @@ off_t lseek(int fd, off_t offset, int whence) __THROW {
 off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with path {} with mode {}", __func__, fd, offset, whence);
+        CTX->log()->trace("{}() called with path '{}', mode {}", __func__, fd, offset, whence);
         if (CTX->file_map()->exist(fd)) {
             return adafs_lseek(fd, offset, whence);
         }
@@ -981,7 +983,7 @@ off64_t lseek64(int fd, off64_t offset, int whence) __THROW {
 int fsync(int fd) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {} path {}", __func__, fd, CTX->file_map()->get(fd)->path());
+        CTX->log()->trace("{}() called with fd {}, path '{}'", __func__, fd, CTX->file_map()->get(fd)->path());
         if (CTX->file_map()->exist(fd)) {
             return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
         }
@@ -992,7 +994,7 @@ int fsync(int fd) {
 int fdatasync(int fd) {
     init_passthrough_if_needed();
     if(CTX->initialized()) {
-        CTX->log()->trace("{}() called with fd {} path {}", __func__, fd, CTX->file_map()->get(fd)->path());
+        CTX->log()->trace("{}() called with fd {}, path '{}'", __func__, fd, CTX->file_map()->get(fd)->path());
         if (CTX->file_map()->exist(fd)) {
             return 0; // This is a noop for us atm. fsync is called implicitly because each chunk is closed after access
         }
@@ -1132,7 +1134,7 @@ DIR* opendir(const char* path){
     if(!CTX->initialized()) {
         return LIBC_FUNC(opendir, path);
     }
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if(!CTX->relativize_path(path, rel_path)) {
       return LIBC_FUNC(opendir, rel_path.c_str());
@@ -1201,7 +1203,7 @@ int chdir(const char* path){
         return LIBC_FUNC(chdir, path);
     }
 
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     const char* new_path;
     if (CTX->relativize_path(path, rel_path)) {
@@ -1290,7 +1292,7 @@ char *realpath(const char *path, char *resolved_path) {
         return LIBC_FUNC(realpath, path, resolved_path);
     }
 
-    CTX->log()->trace("{}() called with path {}", __func__, path);
+    CTX->log()->trace("{}() called with path '{}'", __func__, path);
     std::string rel_path;
     if (!CTX->relativize_path(path, rel_path)) {
         return LIBC_FUNC(realpath, rel_path.c_str(), resolved_path);
@@ -1305,7 +1307,7 @@ char *realpath(const char *path, char *resolved_path) {
     if(resolved_path == nullptr) {
         resolved_path = static_cast<char*>(malloc(absolute_path.size() +  1));
         if(resolved_path == nullptr){
-            CTX->log()->error("{}() failed to allocate buffer for called with path {}", __func__, path);
+            CTX->log()->error("{}() failed to allocate buffer for called with path '{}'", __func__, path);
             errno = ENOMEM;
             return nullptr;
         }

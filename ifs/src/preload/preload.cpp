@@ -314,7 +314,7 @@ void init_preload() {
         CTX->log()->error("{}() Daemon not running or mountdir not set", __func__);
         exit(EXIT_FAILURE);
     } else {
-        CTX->log()->info("{}() mountdir \"{}\" loaded", __func__, CTX->mountdir());
+        CTX->log()->info("{}() mountdir '{}' loaded", __func__, CTX->mountdir());
     }
     CTX->initialized(true);
     CTX->log()->debug("{}() exit", __func__);
