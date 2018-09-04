@@ -148,8 +148,8 @@ int get_daemon_pid() {
         cerr << "No permission to open pid file at " << daemon_pid_path()
              << " or ADA-FS daemon pid file not found. Daemon not running?" << endl;
         CTX->log()->error(
-                "{}() No permission to open pid file at {} or ADA-FS daemon pid file not found. Daemon not running?",
-                __func__, daemon_pid_path());
+                "{}() Failed to open pid file '{}'. Error: {}",
+                __func__, daemon_pid_path(), std::strerror(errno));
     }
     ifs.close();
 
