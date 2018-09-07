@@ -206,6 +206,8 @@ clonedeps "argobots" "https://github.com/carns/argobots.git" "4a84e66ed8544db215
 clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "cf673d430ce3d4b4f0a32f19f261e7898a863b81" &
 # get rocksdb
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v5.14.2.tar.gz" &
+# get syscall_intercept
+clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "4b3a3b50f9d8d0127a4b39022d78b7369a534673" &
 
 # Wait for all download to be completed
 wait

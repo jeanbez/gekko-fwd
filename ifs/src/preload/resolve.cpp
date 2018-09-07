@@ -2,9 +2,9 @@
 #include <string>
 #include <sys/stat.h>
 #include <cassert>
+#include <libsyscall_intercept_hook_point.h>
 
 #include "global/path_util.hpp"
-#include "preload/passthrough.hpp"
 #include "preload/preload.hpp"
 
 
@@ -70,7 +70,7 @@ bool resolve_path (const std::string& path, std::string& resolved) {
             if (path.compare(start, comp_size, mnt_components.at(mnt_matched)) == 0) {
                 ++mnt_matched;
             }
-            if (LIBC_FUNC(__xstat, _STAT_VER, resolved.c_str(), &st) < 0) {
+            if (lstat(resolved.c_str(), &st) < 0) {
                 resolved.append(path, end, std::string::npos);
                 return false;
             }
@@ -101,8 +101,8 @@ bool resolve_path (const std::string& path, std::string& resolved) {
 
 std::string get_sys_cwd() {
     char temp[PATH_MAX_LEN];
-    if(LIBC_FUNC(getcwd, temp, PATH_MAX_LEN) == NULL) {
-        throw std::system_error(errno,
+    if (long ret = syscall_no_intercept(SYS_getcwd, temp, PATH_MAX_LEN) < 0) {
+        throw std::system_error(syscall_error_code(ret),
                                 std::system_category(),
                                 "Failed to retrieve current working directory");
     }
@@ -116,10 +116,10 @@ std::string get_sys_cwd() {
 
 void set_sys_cwd(const std::string& path) {
     CTX->log()->debug("{}() to '{}'", __func__, path);
-    if (LIBC_FUNC(chdir, path.c_str())) {
+    if (long ret = syscall_no_intercept(SYS_chdir, path.c_str())) {
         CTX->log()->error("{}() failed to set system current working directory: {}",
-                __func__, std::strerror(errno));
-        throw std::system_error(errno,
+                __func__, std::strerror(syscall_error_code(ret)));
+        throw std::system_error(syscall_error_code(ret),
                                 std::system_category(),
                                 "Failed to set system current working directory");
     }
