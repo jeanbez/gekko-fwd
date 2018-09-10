@@ -265,6 +265,8 @@ void init_ld_environment_() {
         CTX->log()->error("{}() Unable to read system hostfile /etc/hosts for address mapping.", __func__);
         exit(EXIT_FAILURE);
     }
+    //use rpc_addresses here to avoid "static initialization order problem"
+    rpc_addresses.clear();
     if (!lookup_all_hosts()) {
         CTX->log()->error("{}() Unable to lookup all host RPC addresses.", __func__);
         exit(EXIT_FAILURE);
