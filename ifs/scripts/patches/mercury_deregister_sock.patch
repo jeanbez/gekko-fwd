@@ -17,7 +17,7 @@ index d96f1b6..01e4110 100644
          break;
 +        case NA_SM_SOCK_DONE: {
 +            *progressed = NA_FALSE;
-+        	ret = na_sm_poll_deregister(na_class, NA_SM_SOCK, poll_addr);
++            ret = na_sm_poll_deregister(na_class, NA_SM_SOCK, poll_addr);
 +            if (ret != NA_SUCCESS) {
 +                NA_LOG_ERROR("Could not deregister socket from poll set");
 +                ret = NA_PROTOCOL_ERROR;
