@@ -218,7 +218,7 @@ if [ "$NA_LAYER" == "bmi" ] || [ "$NA_LAYER" == "all" ]; then
     cd ${CURR}
     ./prepare
     cd ${CURR}/build
-    ../configure --prefix=${INSTALL} --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict
+    CFLAGS=-w ../configure --prefix=${INSTALL} --enable-shared --disable-static --disable-karma --enable-bmi-only --enable-fast --disable-strict
     make -j${CORES}
     make install
 fi
