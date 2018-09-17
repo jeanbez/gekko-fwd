@@ -23,7 +23,7 @@ void create_metadentry(const std::string& path, mode_t mode) {
     if (ADAFS_DATA->atime_state() || ADAFS_DATA->mtime_state() || ADAFS_DATA->ctime_state()) {
         std::time_t time;
         std::time(&time);
-        auto time_s = fmt::FormatInt(time).str();
+        auto time_s = std::to_string(time);
         if (ADAFS_DATA->atime_state())
             md.atime(time);
         if (ADAFS_DATA->mtime_state())

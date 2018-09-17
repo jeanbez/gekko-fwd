@@ -128,31 +128,40 @@ void Metadata::update_ACM_time(bool a, bool c, bool m) {
 std::string Metadata::serialize() const {
     std::string s;
     // The order is important. don't change.
-    s += fmt::FormatInt(mode_).c_str(); // add mandatory mode
-    s += dentry_val_delim + fmt::FormatInt(size_).c_str(); // add mandatory size
+    s += std::to_string(mode_); // add mandatory mode
+    s += dentry_val_delim;
+    s += std::to_string(size_); // add mandatory size
     if (ADAFS_DATA->atime_state()) {
-        s += dentry_val_delim + fmt::FormatInt(atime_).c_str();
+        s += dentry_val_delim;
+        s += std::to_string(atime_);
     }
     if (ADAFS_DATA->mtime_state()) {
-        s += dentry_val_delim + fmt::FormatInt(mtime_).c_str();
+        s += dentry_val_delim;
+        s += std::to_string(mtime_);
     }
     if (ADAFS_DATA->ctime_state()) {
-        s += dentry_val_delim + fmt::FormatInt(ctime_).c_str();
+        s += dentry_val_delim;
+        s += std::to_string(ctime_);
     }
     if (ADAFS_DATA->uid_state()) {
-        s += dentry_val_delim + fmt::FormatInt(uid_).str();
+        s += dentry_val_delim;
+        s += std::to_string(uid_);
     }
     if (ADAFS_DATA->gid_state()) {
-        s += dentry_val_delim + fmt::FormatInt(gid_).str();
+        s += dentry_val_delim;
+        s += std::to_string(gid_);
     }
     if (ADAFS_DATA->inode_no_state()) {
-        s += dentry_val_delim + fmt::FormatInt(inode_no_).str();
+        s += dentry_val_delim;
+        s += std::to_string(inode_no_);
     }
     if (ADAFS_DATA->link_cnt_state()) {
-        s += dentry_val_delim + fmt::FormatInt(link_count_).c_str();
+        s += dentry_val_delim;
+        s += std::to_string(link_count_);
     }
     if (ADAFS_DATA->blocks_state()) {
-        s += dentry_val_delim + fmt::FormatInt(blocks_).c_str();
+        s += dentry_val_delim;
+        s += std::to_string(blocks_);
     }
     return s;
 }

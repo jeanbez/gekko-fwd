@@ -492,7 +492,7 @@ int main(int argc, const char* argv[]) {
     }
     ADAFS_DATA->hosts(hostmap);
     ADAFS_DATA->host_size(hostmap.size());
-    ADAFS_DATA->rpc_port(fmt::FormatInt(RPC_PORT).str());
+    ADAFS_DATA->rpc_port(std::to_string(RPC_PORT));
     ADAFS_DATA->hosts_raw(hosts_raw);
 
     ADAFS_DATA->spdlogger()->info("{}() Initializing environment. Hold on ...", __func__);
