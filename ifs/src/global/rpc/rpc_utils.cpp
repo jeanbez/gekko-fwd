@@ -1,6 +1,5 @@
 
 #include <global/rpc/rpc_utils.hpp>
-#include <extern/spdlog/fmt/fmt.h>
 
 using namespace std;
 

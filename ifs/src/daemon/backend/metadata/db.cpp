@@ -3,7 +3,6 @@
 #include <daemon/backend/exceptions.hpp>
 
 #include <global/path_util.hpp>
-#include <extern/spdlog/spdlog.h>
 
 MetadataDB::MetadataDB(const std::string& path): path(path) {
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well

@@ -1,8 +1,8 @@
 #include <daemon/backend/data/chunk_storage.hpp>
 #include <global/path_util.hpp>
 
+#include <spdlog/spdlog.h>
 #include <cerrno>
-#include <extern/spdlog/spdlog.h>
 #include <boost/filesystem.hpp>
 
 namespace bfs = boost::filesystem;

@@ -1,4 +1,6 @@
 #include "global/log_util.hpp"
+
+#include <spdlog/sinks/basic_file_sink.h>
 #include <exception>
 #include <vector>
 #include <list>
@@ -36,7 +38,7 @@ void setup_loggers(const std::vector<std::string>& loggers_name,
         spdlog::level::level_enum level, const std::string& path) {
 
         /* Create common sink */
-        auto file_sink = std::make_shared<spdlog::sinks::simple_file_sink_mt>(path);
+        auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path);
 
         /* Create and configure loggers */
         auto loggers = std::list<std::shared_ptr<spdlog::logger>>();

@@ -1,8 +1,8 @@
 #ifndef IFS_LOG_UITIL_HPP
 #define IFS_LOG_UITIL_HPP
 
+#include <spdlog/spdlog.h>
 
-#include "extern/spdlog/spdlog.h"
 
 spdlog::level::level_enum get_spdlog_level(const std::string& level_str);
 spdlog::level::level_enum get_spdlog_level(unsigned int level);

@@ -4,13 +4,11 @@
 
 // std libs
 #include <string>
+#include <spdlog/spdlog.h>
 
 // adafs config
 #include <global/configure.hpp>
 #include <global/global_defs.hpp>
-// third party libs
-#include <extern/spdlog/spdlog.h>
-#include <extern/spdlog/fmt/fmt.h>
 // margo
 extern "C" {
 #include <abt.h>

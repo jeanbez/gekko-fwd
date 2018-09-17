@@ -37,6 +37,7 @@ target_link_libraries(adafs_daemon
     storage
     distributor
     log_util
+    spdlog
     # margo libs
     ${ABT_LIBRARIES}
     mercury

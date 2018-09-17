@@ -1,3 +1,4 @@
+#include <spdlog/spdlog.h>
 
 #include <daemon/classes/fs_data.hpp>
 #include <daemon/backend/metadata/db.hpp>

@@ -1,7 +1,8 @@
 #ifndef IFS_PRELOAD_CTX_HPP
 #define IFS_PRELOAD_CTX_HPP
 
-#include <extern/spdlog/spdlog.h>
+#include <spdlog/spdlog.h>
+#include <map>
 #include <memory>
 #include <vector>
 #include <string>

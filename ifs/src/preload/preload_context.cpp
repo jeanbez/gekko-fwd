@@ -2,7 +2,6 @@
 
 #include <preload/open_file_map.hpp>
 #include <preload/resolve.hpp>
-#include <extern/spdlog/spdlog.h>
 #include <global/path_util.hpp>
 #include <cassert>
 

@@ -10,6 +10,7 @@ class ChunkStorage;
 class Distributor;
 
 #include <unordered_map>
+#include <map>
 #include <functional> //std::hash
 
 class FsData {

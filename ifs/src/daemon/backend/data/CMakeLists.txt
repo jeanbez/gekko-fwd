@@ -11,6 +11,7 @@ target_sources(storage
 
 target_link_libraries(storage
     PRIVATE
+    spdlog
     Boost::filesystem
     ${ABT_LIBRARIES}
     )

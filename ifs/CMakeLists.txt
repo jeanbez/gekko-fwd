@@ -139,6 +139,12 @@ set_target_properties(RocksDB
     INTERFACE_INCLUDE_DIRECTORIES ${ROCKSDB_INCLUDE_DIRS}
 )
 
+add_library(spdlog INTERFACE)
+# we cannot use target_include_directories with CMake < 3.11
+set_target_properties(spdlog
+    PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/include/extern"
+)
 
 set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 
