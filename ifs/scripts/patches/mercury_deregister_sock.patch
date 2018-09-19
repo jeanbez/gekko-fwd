@@ -1,14 +1,15 @@
-From fd34de9e4a8b91202f0afb9aa222c06bc9761283 Mon Sep 17 00:00:00 2001
+From 7fbc56996cb5cdba7f0a4429b17c0db110346916 Mon Sep 17 00:00:00 2001
 From: Tommaso Tocci <tommaso@tocci.pro>
 Date: Mon, 2 Jul 2018 11:54:10 +0200
 Subject: [PATCH] sm: clear client disconnection event on socket
 
 ---
- src/na/na_sm.c | 12 +++++++++++-
- 1 file changed, 11 insertions(+), 1 deletion(-)
+ src/na/na_sm.c          | 13 +++++++++++++
+ src/util/mercury_poll.c |  2 ++
+ 2 files changed, 15 insertions(+)
 
 diff --git a/src/na/na_sm.c b/src/na/na_sm.c
-index d96f1b6..01e4110 100644
+index d96f1b6..4c728b1 100644
 --- a/src/na/na_sm.c
 +++ b/src/na/na_sm.c
 @@ -2134,6 +2134,16 @@ na_sm_progress_sock(na_class_t *na_class, struct na_sm_addr *poll_addr,
@@ -28,15 +29,35 @@ index d96f1b6..01e4110 100644
          default:
              /* TODO Silently ignore, no progress */
              *progressed = NA_FALSE;
-@@ -2860,7 +2870,7 @@ na_sm_addr_free(na_class_t *na_class, na_addr_t addr)
+@@ -2858,10 +2868,13 @@ na_sm_addr_free(na_class_t *na_class, na_addr_t addr)
+ 
+         /* Deregister sock file descriptor */
          ret = na_sm_poll_deregister(na_class, NA_SM_SOCK, na_sm_addr);
++
++        /*
          if (ret != NA_SUCCESS) {
              NA_LOG_ERROR("Could not delete sock from poll set");
--            goto done;
-+            //goto done;
+             goto done;
          }
++        */
  
          /* Remove addr from poll addr queue */
+         hg_thread_spin_lock(
+diff --git a/src/util/mercury_poll.c b/src/util/mercury_poll.c
+index afc7f8e..c2a38f5 100644
+--- a/src/util/mercury_poll.c
++++ b/src/util/mercury_poll.c
+@@ -399,8 +399,10 @@ hg_poll_remove(hg_poll_set_t *poll_set, int fd)
+     hg_thread_spin_unlock(&poll_set->poll_data_list_lock);
+ #endif
+     if (!found) {
++        /*
+         HG_UTIL_LOG_ERROR("Could not find fd in poll_set");
+         ret = HG_UTIL_FAIL;
++        */
+         goto done;
+     }
+     hg_atomic_decr32(&poll_set->nfds);
 -- 
-2.18.0
+2.19.0
 
