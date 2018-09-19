@@ -1,6 +1,7 @@
 #include <preload/preload_context.hpp>
 
 #include <preload/open_file_map.hpp>
+#include <preload/open_dir.hpp>
 #include <preload/resolve.hpp>
 #include <global/path_util.hpp>
 #include <cassert>
@@ -43,15 +44,57 @@ const std::string& PreloadContext::cwd() const {
     return cwd_;
 }
 
+RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
+                                                    const char * raw_path,
+                                                    std::string& relative_path) const {
+
+    // Relativize path should be called only after the library constructor has been executed
+    assert(initialized_);
+    // If we run the constructor we also already setup the mountdir
+    assert(!mountdir_.empty());
+
+    // We assume raw path is valid
+    assert(raw_path != nullptr);
+
+    std::string path;
+
+    if (raw_path[0] != PSP) {
+        // path is relative
+        if (dirfd == AT_FDCWD) {
+            // path is relative to cwd
+            path = prepend_path(cwd_, raw_path);
+        } else {
+            if (!ofm_->exist(dirfd)) {
+                return RelativizeStatus::fd_unknown;
+            }
+            // path is relative to fd
+            auto dir = ofm_->get_dir(dirfd);
+            if (dir == nullptr) {
+                return RelativizeStatus::fd_not_a_dir;
+            }
+            path = mountdir_;
+            path.append(dir->path());
+            path.push_back(PSP);
+            path.append(raw_path);
+        }
+    } else {
+        path = raw_path;
+    }
+
+    if (resolve_path(path, relative_path)) {
+        return RelativizeStatus::internal;
+    }
+    return RelativizeStatus::external;
+}
+
 bool PreloadContext::relativize_path(const char * raw_path, std::string& relative_path) const {
     // Relativize path should be called only after the library constructor has been executed
     assert(initialized_);
     // If we run the constructor we also already setup the mountdir
     assert(!mountdir_.empty());
 
-    if(raw_path == nullptr || raw_path[0] == '\0') {
-        return false;
-    }
+    // We assume raw path is valid
+    assert(raw_path != nullptr);
 
     std::string path;
 

@@ -36,6 +36,12 @@ struct FsConfig {
     std::string rpc_port;
 };
 
+enum class RelativizeStatus {
+    internal,
+    external,
+    fd_unknown,
+    fd_not_a_dir
+};
 
 class PreloadContext {
     private:
@@ -70,8 +76,11 @@ class PreloadContext {
     void cwd(const std::string& path);
     const std::string& cwd() const;
 
-    bool relativize_path(const char * raw_path, std::string& relative_path) const;
+    RelativizeStatus relativize_fd_path(int dirfd,
+                                        const char * raw_path,
+                                        std::string& relative_path) const;
 
+    bool relativize_path(const char * raw_path, std::string& relative_path) const;
     const std::shared_ptr<OpenFileMap>& file_map() const;
 
     void distributor(std::shared_ptr<Distributor> distributor);
