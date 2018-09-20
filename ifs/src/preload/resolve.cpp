@@ -91,6 +91,10 @@ bool resolve_path (const std::string& path, std::string& resolved) {
         CTX->log()->debug("{}() internal: '{}'", __func__, resolved);
         return true;
     }
+
+    if (resolved.size() == 0) {
+        resolved.push_back(PSP);
+    }
     CTX->log()->debug("{}() external: '{}'", __func__, resolved);
     return false;
 }
