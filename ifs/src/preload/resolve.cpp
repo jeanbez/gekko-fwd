@@ -8,18 +8,44 @@
 #include "preload/preload.hpp"
 
 
+unsigned int path_match_components(const std::string& path, unsigned int &path_components, const std::vector<std::string>& components) {
+    unsigned int matched = 0;
+    unsigned int processed_components = 0;
+    std::string::size_type comp_size = 0; // size of current component
+    std::string::size_type start = 0; // start index of curr component
+    std::string::size_type end = 0; // end index of curr component (last processed Path Separator "PSP")
+
+    while(++end < path.size()) {
+        start = end;
+
+        // Find next component
+        end = path.find(PSP, start);
+        if(end == std::string::npos) {
+            end = path.size();
+        }
+
+        comp_size = end - start;
+        if (matched == processed_components &&
+            path.compare(start, comp_size, components.at(matched)) == 0) {
+            ++matched;
+        }
+        ++processed_components;
+    }
+    path_components = processed_components;
+    return matched;
+}
 
 bool resolve_path (const std::string& path, std::string& resolved) {
     CTX->log()->debug("{}() path: '{}'", __func__, path);
 
     struct stat st;
     const std::vector<std::string>& mnt_components = CTX->mountdir_components();
-    unsigned int mnt_matched = 0; // matched number of component in mountdir
+    unsigned int matched_components = 0; // matched number of component in mountdir
+    unsigned int resolved_components = 0;
     std::string::size_type comp_size = 0; // size of current component
     std::string::size_type start = 0; // start index of curr component
-    std::string::size_type end = 0; // end index of curr component (last processed PSP)
+    std::string::size_type end = 0; // end index of curr component (last processed Path Separator "PSP")
     std::string::size_type last_slash_pos = 0; // index of last slash in resolved path
-    std::string component;
     resolved.clear();
     resolved.reserve(path.size());
 
@@ -51,11 +77,14 @@ bool resolve_path (const std::string& path, std::string& resolved) {
         }
         if (comp_size == 2 && path.at(start) == '.' && path.at(start+1) == '.') {
             // component is '..' we need to rollback resolved path
-            if(resolved.size() > 0) {
+            if (resolved.size() > 0) {
                 resolved.erase(last_slash_pos);
             }
-            if(mnt_matched > 0) {
-                --mnt_matched;
+            if (resolved_components > 0) {
+                --resolved_components;
+            }
+            if (matched_components > 0) {
+                --matched_components;
             }
             continue;
         }
@@ -65,28 +94,43 @@ bool resolve_path (const std::string& path, std::string& resolved) {
         last_slash_pos = resolved.size() - 1;
         resolved.append(path, start, comp_size);
 
-        if (mnt_matched < mnt_components.size()) {
+        if (matched_components < mnt_components.size()) {
             // Outside GekkoFS
-            if (path.compare(start, comp_size, mnt_components.at(mnt_matched)) == 0) {
-                ++mnt_matched;
+            if (matched_components == resolved_components &&
+                path.compare(start, comp_size, mnt_components.at(matched_components)) == 0) {
+                ++matched_components;
             }
             if (lstat(resolved.c_str(), &st) < 0) {
+#ifndef NDEBUG
+                CTX->log()->debug("{}() path does not exists: '{}'", __func__, resolved.c_str());
+#endif
                 resolved.append(path, end, std::string::npos);
                 return false;
             }
             if (S_ISLNK(st.st_mode)) {
-               CTX->log()->error("{}() encountered link: {}", __func__, resolved);
-               throw std::runtime_error("Readlink encoutered: '" + resolved + "'");
+                char link_resolved[PATH_MAX_LEN];
+                if (realpath(resolved.c_str(), link_resolved) == nullptr) {
+                    CTX->log()->error("{}() Failed to get realpath for link '{}'. Error: {}", __func__, resolved, strerror(errno));
+                    throw std::runtime_error("Failed to get realpath for link '" + resolved + "'. Error: " + strerror(errno));
+                }
+                // substituute resolved with new link path
+                resolved = link_resolved;
+                matched_components = path_match_components(resolved, resolved_components, mnt_components);
+                // set matched counter to value coherent with the new path
+                last_slash_pos = resolved.find_last_of(PSP);
+                continue;
             } else if ((!S_ISDIR(st.st_mode)) && (end != path.size())) {
                resolved.append(path, end, std::string::npos);
                return false;
             }
         } else {
             // Inside GekkoFS
-            ++mnt_matched;
+            ++matched_components;
         }
+        ++resolved_components;
     }
-    if (mnt_matched >= mnt_components.size()) {
+
+    if (matched_components >= mnt_components.size()) {
         resolved.erase(1, CTX->mountdir().size());
         CTX->log()->debug("{}() internal: '{}'", __func__, resolved);
         return true;
