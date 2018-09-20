@@ -30,7 +30,7 @@ bool resolve_path (const std::string& path, std::string& resolved) {
         start = end;
 
         /* Skip sequence of multiple path-separators. */
-        while(path.at(start) == PSP) {
+        while(start < path.size() && path[start] == PSP) {
             ++start;
         }
 
