@@ -78,9 +78,10 @@ class PreloadContext {
 
     RelativizeStatus relativize_fd_path(int dirfd,
                                         const char * raw_path,
-                                        std::string& relative_path) const;
+                                        std::string& relative_path,
+                                        bool resolve_last_link = true) const;
 
-    bool relativize_path(const char * raw_path, std::string& relative_path) const;
+    bool relativize_path(const char * raw_path, std::string& relative_path, bool resolve_last_link = true) const;
     const std::shared_ptr<OpenFileMap>& file_map() const;
 
     void distributor(std::shared_ptr<Distributor> distributor);

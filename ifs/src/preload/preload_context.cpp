@@ -46,7 +46,8 @@ const std::string& PreloadContext::cwd() const {
 
 RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
                                                     const char * raw_path,
-                                                    std::string& relative_path) const {
+                                                    std::string& relative_path,
+                                                    bool resolve_last_link) const {
 
     // Relativize path should be called only after the library constructor has been executed
     assert(initialized_);
@@ -81,13 +82,13 @@ RelativizeStatus PreloadContext::relativize_fd_path(int dirfd,
         path = raw_path;
     }
 
-    if (resolve_path(path, relative_path)) {
+    if (resolve_path(path, relative_path, resolve_last_link)) {
         return RelativizeStatus::internal;
     }
     return RelativizeStatus::external;
 }
 
-bool PreloadContext::relativize_path(const char * raw_path, std::string& relative_path) const {
+bool PreloadContext::relativize_path(const char * raw_path, std::string& relative_path, bool resolve_last_link) const {
     // Relativize path should be called only after the library constructor has been executed
     assert(initialized_);
     // If we run the constructor we also already setup the mountdir
@@ -106,7 +107,7 @@ bool PreloadContext::relativize_path(const char * raw_path, std::string& relativ
     } else {
         path = raw_path;
     }
-    return resolve_path(path, relative_path);
+    return resolve_path(path, relative_path, resolve_last_link);
 }
 
 const std::shared_ptr<OpenFileMap>& PreloadContext::file_map() const {

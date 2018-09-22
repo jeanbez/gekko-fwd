@@ -1,6 +1,6 @@
 #include <string>
 
-bool resolve_path (const std::string& path, std::string& resolved);
+bool resolve_path (const std::string& path, std::string& resolved, bool resolve_last_link = true);
 
 std::string get_sys_cwd();
 void set_sys_cwd(const std::string& path);

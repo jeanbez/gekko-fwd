@@ -35,7 +35,7 @@ unsigned int path_match_components(const std::string& path, unsigned int &path_c
     return matched;
 }
 
-bool resolve_path (const std::string& path, std::string& resolved) {
+bool resolve_path (const std::string& path, std::string& resolved, bool resolve_last_link) {
     CTX->log()->debug("{}() path: '{}'", __func__, path);
 
     struct stat st;
@@ -108,6 +108,9 @@ bool resolve_path (const std::string& path, std::string& resolved) {
                 return false;
             }
             if (S_ISLNK(st.st_mode)) {
+                if (!resolve_last_link && end == path.size()) {
+                    continue;
+                }
                 char link_resolved[PATH_MAX_LEN];
                 if (realpath(resolved.c_str(), link_resolved) == nullptr) {
                     CTX->log()->error("{}() Failed to get realpath for link '{}'. Error: {}", __func__, resolved, strerror(errno));
