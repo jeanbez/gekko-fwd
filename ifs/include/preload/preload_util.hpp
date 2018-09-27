@@ -60,6 +60,7 @@ extern hg_id_t ipc_write_data_id;
 extern hg_id_t ipc_read_data_id;
 extern hg_id_t ipc_trunc_data_id;
 extern hg_id_t ipc_get_dirents_id;
+extern hg_id_t ipc_chunk_stat_id;
 // RPC IDs
 extern hg_id_t rpc_minimal_id;
 extern hg_id_t rpc_mk_node_id;
@@ -74,6 +75,7 @@ extern hg_id_t rpc_write_data_id;
 extern hg_id_t rpc_read_data_id;
 extern hg_id_t rpc_trunc_data_id;
 extern hg_id_t rpc_get_dirents_id;
+extern hg_id_t rpc_chunk_stat_id;
 // rpc addresses. Populated when environment is initialized. After that it is read-only accessed
 extern std::map<uint64_t, hg_addr_t> rpc_addresses;
 
