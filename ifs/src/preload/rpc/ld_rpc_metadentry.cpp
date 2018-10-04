@@ -297,7 +297,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
 }
 
 
-int rpc_send_update_metadentry(const string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags) {
+int rpc_send_update_metadentry(const string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags) {
     hg_handle_t handle;
     rpc_update_metadentry_in_t in{};
     rpc_err_out_t out{};
@@ -305,15 +305,15 @@ int rpc_send_update_metadentry(const string& path, const Metadentry& md, const M
     // fill in
     // add data
     in.path = path.c_str();
-    in.size = md_flags.size ? md.size : 0;
-    in.nlink = md_flags.link_count ? md.link_count : 0;
-    in.gid = md_flags.gid ? md.gid : 0;
-    in.uid = md_flags.uid ? md.uid : 0;
-    in.blocks = md_flags.blocks ? md.blocks : 0;
-    in.inode_no = md_flags.inode_no ? md.inode_no : 0;
-    in.atime = md_flags.atime ? md.atime : 0;
-    in.mtime = md_flags.mtime ? md.mtime : 0;
-    in.ctime = md_flags.ctime ? md.ctime : 0;
+    in.size = md_flags.size ? md.size() : 0;
+    in.nlink = md_flags.link_count ? md.link_count() : 0;
+    in.gid = md_flags.gid ? md.gid() : 0;
+    in.uid = md_flags.uid ? md.uid() : 0;
+    in.blocks = md_flags.blocks ? md.blocks() : 0;
+    in.inode_no = md_flags.inode_no ? md.inode_no() : 0;
+    in.atime = md_flags.atime ? md.atime() : 0;
+    in.mtime = md_flags.mtime ? md.mtime() : 0;
+    in.ctime = md_flags.ctime ? md.ctime() : 0;
     // add data flags
     in.size_flag = bool_to_merc_bool(md_flags.size);
     in.nlink_flag = bool_to_merc_bool(md_flags.link_count);

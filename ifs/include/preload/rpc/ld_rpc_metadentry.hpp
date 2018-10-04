@@ -6,6 +6,7 @@
 #include <preload/preload_util.hpp>
 #include <global/rpc/rpc_types.hpp>
 #include <preload/open_dir.hpp>
+#include <global/metadata.hpp>
 #include <iostream>
 
 inline hg_return_t margo_forward_timed_wrap_timer(hg_handle_t& handle, void* in_struct, const char* func);
@@ -24,7 +25,7 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
 
 int rpc_send_decr_size(const std::string& path, size_t length);
 
-int rpc_send_update_metadentry(const std::string& path, const Metadentry& md, const MetadentryUpdateFlags& md_flags);
+int rpc_send_update_metadentry(const std::string& path, const Metadata& md, const MetadentryUpdateFlags& md_flags);
 
 int rpc_send_update_metadentry_size(const std::string& path, size_t size, off64_t offset, bool append_flag,
                                     off64_t& ret_size);

@@ -3,6 +3,7 @@
 #define IFS_PRELOAD_UTIL_HPP
 
 #include <preload/preload.hpp>
+#include <global/metadata.hpp>
 // third party libs
 #include <string>
 #include <iostream>
@@ -11,21 +12,6 @@ extern "C" {
 #include <margo.h>
 }
 
-// Used to bundle metadata into one place
-struct Metadentry {
-    time_t atime;
-    time_t mtime;
-    time_t ctime;
-    uid_t uid;
-    gid_t gid;
-    mode_t mode;
-    uint64_t inode_no;
-    nlink_t link_count;
-    off_t size;
-    blkcnt_t blocks;
-
-    std::string path;
-};
 struct MetadentryUpdateFlags {
     bool atime = false;
     bool mtime = false;
@@ -83,7 +69,7 @@ extern std::map<uint64_t, hg_addr_t> rpc_addresses;
 
 bool is_fs_path(const char* path);
 
-int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
+int metadata_to_stat(const std::string& path, const Metadata& md, struct stat& attr);
 
 int get_daemon_pid();
 
