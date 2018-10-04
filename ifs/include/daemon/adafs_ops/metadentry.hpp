@@ -10,8 +10,6 @@ int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_
 
 void create_metadentry(const std::string& path, mode_t mode);
 
-int db_val_to_stat(const std::string& path, std::string db_val, struct stat& attr);
-
 std::string get_metadentry_str(const std::string& path);
 
 Metadata get_metadentry(const std::string& path);
