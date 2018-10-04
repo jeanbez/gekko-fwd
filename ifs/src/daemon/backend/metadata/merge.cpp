@@ -112,7 +112,7 @@ bool MetadataMergeOperator::FullMergeV2(
         prev_md_value = merge_in.existing_value->ToString();
     }
 
-    Metadata md{merge_in.key.ToString(), prev_md_value};
+    Metadata md{prev_md_value};
 
     size_t fsize = md.size();
 

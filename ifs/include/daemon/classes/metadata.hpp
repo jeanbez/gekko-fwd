@@ -18,14 +18,12 @@ private:
     size_t size_;               // size_ in bytes, might be computed instead of stored
     blkcnt_t blocks_;          // allocated file system blocks_
 
-    std::string path_;
-
 public:
     Metadata();
 
-    Metadata(const std::string& path, mode_t mode);
+    Metadata(mode_t mode);
 
-    Metadata(const std::string& path, std::string db_val);
+    Metadata(std::string db_val);
 
     void init_ACM_time();
 
@@ -73,10 +71,6 @@ public:
     blkcnt_t blocks() const;
 
     void blocks(blkcnt_t blocks_);
-
-    const std::string& path() const;
-
-    void path(const std::string& path);
 
 };
 

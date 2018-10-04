@@ -7,38 +7,40 @@ static const char MSP = '|'; // metadata separator
 
 // By default create an empty metadata object
 
-Metadata::Metadata() : atime_(),
-                       mtime_(),
-                       ctime_(),
-                       uid_(),
-                       gid_(),
-                       mode_(),
-                       inode_no_(INVALID_INODE),
-                       link_count_(0),
-                       size_(0),
-                       blocks_(0) {}
+Metadata::Metadata() :
+    atime_(),
+    mtime_(),
+    ctime_(),
+    uid_(),
+    gid_(),
+    mode_(),
+    inode_no_(INVALID_INODE),
+    link_count_(0),
+    size_(0),
+    blocks_(0)
+{}
 
-Metadata::Metadata(const std::string& path, const mode_t mode) : atime_(),
-                                                                 mtime_(),
-                                                                 ctime_(),
-                                                                 uid_(),
-                                                                 gid_(),
-                                                                 mode_(mode),
-                                                                 inode_no_(INVALID_INODE),
-                                                                 link_count_(0),
-                                                                 size_(0),
-                                                                 blocks_(0),
-                                                                 path_(path) {}
+Metadata::Metadata(const mode_t mode) :
+    atime_(),
+    mtime_(),
+    ctime_(),
+    uid_(),
+    gid_(),
+    mode_(mode),
+    inode_no_(INVALID_INODE),
+    link_count_(0),
+    size_(0),
+    blocks_(0)
+{}
 
 /**
  * Creates a metadata object from a value from the database
  * @param path
  * @param db_val
  */
-Metadata::Metadata(const std::string& path, std::string db_val) {
+Metadata::Metadata(std::string db_val) {
     auto pos = db_val.find(MSP);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
-        inode_no_ = std::hash<std::string>{}(path);
         mode_ = static_cast<unsigned int>(stoul(db_val));
         link_count_ = 1;
         uid_ = 0;
@@ -246,12 +248,4 @@ blkcnt_t Metadata::blocks() const {
 
 void Metadata::blocks(blkcnt_t blocks_) {
     Metadata::blocks_ = blocks_;
-}
-
-const std::string& Metadata::path() const {
-    return path_;
-}
-
-void Metadata::path(const std::string& path) {
-    Metadata::path_ = path;
 }

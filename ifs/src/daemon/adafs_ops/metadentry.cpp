@@ -18,7 +18,7 @@ ino_t generate_inode_no() {
  */
 void create_metadentry(const std::string& path, mode_t mode) {
 
-    Metadata md{path, mode};
+    Metadata md{mode};
     // update metadata object based on what metadata is needed
     if (ADAFS_DATA->atime_state() || ADAFS_DATA->mtime_state() || ADAFS_DATA->ctime_state()) {
         std::time_t time;
@@ -52,7 +52,7 @@ std::string get_metadentry_str(const std::string& path) {
  * @return
  */
 Metadata get_metadentry(const std::string& path) {
-    return {path, get_metadentry_str(path)};
+    return {get_metadentry_str(path)};
 }
 
 /**
@@ -92,7 +92,7 @@ void update_metadentry_size(const string& path, size_t io_size, off64_t offset, 
 }
 
 void update_metadentry(const string& path, Metadata& md) {
-    ADAFS_DATA->mdb()->update(path, md.path(), md.serialize());
+    ADAFS_DATA->mdb()->update(path, path, md.serialize());
 }
 
 /**
