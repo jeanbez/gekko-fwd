@@ -3,7 +3,7 @@
 #define IFS_METADENTRY_HPP
 
 #include <daemon/adafs_daemon.hpp>
-#include <daemon/classes/metadata.hpp>
+#include <global/metadata.hpp>
 #include <preload/preload_util.hpp>
 
 int create_node(const std::string& path, const uid_t uid, const gid_t gid, mode_t mode);

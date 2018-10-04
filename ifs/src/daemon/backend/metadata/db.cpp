@@ -4,6 +4,9 @@
 
 #include <global/path_util.hpp>
 
+#include <sys/stat.h>
+
+
 MetadataDB::MetadataDB(const std::string& path): path(path) {
     // Optimize RocksDB. This is the easiest way to get RocksDB to perform well
     options.IncreaseParallelism();

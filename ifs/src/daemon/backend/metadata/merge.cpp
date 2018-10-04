@@ -137,7 +137,7 @@ bool MetadataMergeOperator::FullMergeV2(
         } else if(operand_id == OperandID::create){
             continue;
         } else {
-            throw std::runtime_error(fmt::format("Unrecognized merge operand ID: {}", (char)operand_id));
+            throw std::runtime_error("Unrecognized merge operand ID: " + (char)operand_id);
         }
     }
 

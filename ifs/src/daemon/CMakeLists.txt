@@ -5,11 +5,11 @@ set(DAEMON_SRC
     ../global/rpc/rpc_utils.cpp
     ../global/global_func.cpp
     ../global/path_util.cpp
+    ../global/metadata.cpp
     adafs_daemon.cpp
     adafs_ops/metadentry.cpp
     classes/fs_data.cpp
     classes/rpc_data.cpp
-    classes/metadata.cpp
     handler/h_metadentry.cpp
     handler/h_data.cpp
     handler/h_preload.cpp
@@ -23,10 +23,10 @@ set(DAEMON_HEADERS
     ../../include/global/rpc/rpc_types.hpp
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp
+    ../../include/global/metadata.hpp
     ../../include/daemon/adafs_daemon.hpp
     ../../include/daemon/adafs_ops/metadentry.hpp
     ../../include/daemon/classes/fs_data.hpp
-    ../../include/daemon/classes/metadata.hpp
     ../../include/daemon/classes/rpc_data.hpp
     ../../include/daemon/handler/rpc_defs.hpp
     )
