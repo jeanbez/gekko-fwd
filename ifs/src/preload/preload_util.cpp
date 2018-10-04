@@ -13,7 +13,7 @@
 
 using namespace std;
 
-static const std::string dentry_val_delim = ","s;
+static const char MSP = '|';
 
 bool is_fs_path(const char* path) {
     return strstr(path, CTX->mountdir().c_str()) == path;
@@ -43,7 +43,7 @@ int db_val_to_stat(const std::string& path, std::string db_val, struct stat& att
     memset(&attr.st_mtim, 0, sizeof(timespec));
     memset(&attr.st_ctim, 0, sizeof(timespec));
 
-    auto pos = db_val.find(dentry_val_delim);
+    auto pos = db_val.find(MSP);
     if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
         attr.st_mode = static_cast<unsigned int>(stoul(db_val));
         attr.st_nlink = 1;
@@ -61,7 +61,7 @@ int db_val_to_stat(const std::string& path, std::string db_val, struct stat& att
     attr.st_mode = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
     db_val.erase(0, pos + 1);
     // size is also there XXX
-    pos = db_val.find(dentry_val_delim);
+    pos = db_val.find(MSP);
     if (pos != std::string::npos) {  // delimiter found. more metadata is coming
         attr.st_size = stol(db_val.substr(0, pos));
         db_val.erase(0, pos + 1);
@@ -70,37 +70,37 @@ int db_val_to_stat(const std::string& path, std::string db_val, struct stat& att
     }
     // The order is important. don't change.
     if (CTX->fs_conf()->atime_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_atim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (CTX->fs_conf()->mtime_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_mtim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (CTX->fs_conf()->ctime_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_ctim.tv_sec = static_cast<time_t>(stol(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (CTX->fs_conf()->uid_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_uid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (CTX->fs_conf()->gid_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_gid = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (CTX->fs_conf()->inode_no_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_ino = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
     if (CTX->fs_conf()->link_cnt_state) {
-        pos = db_val.find(dentry_val_delim);
+        pos = db_val.find(MSP);
         attr.st_nlink = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
         db_val.erase(0, pos + 1);
     }
