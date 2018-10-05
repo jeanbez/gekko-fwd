@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <ctime>
+#include <cassert>
 
 
 static const char MSP = '|'; // metadata separator
@@ -22,71 +23,74 @@ Metadata::Metadata(const mode_t mode) :
     blocks_(0)
 {}
 
-Metadata::Metadata(std::string db_val) {
-    auto pos = db_val.find(MSP);
-    if (pos == std::string::npos) { // no delimiter found => no metadata enabled. fill with dummy values
-        mode_ = static_cast<unsigned int>(stoul(db_val));
-        link_count_ = 1;
-        uid_ = 0;
-        gid_ = 0;
-        size_ = 0;
-        blocks_ = 0;
-        atime_ = 0;
-        mtime_ = 0;
-        ctime_ = 0;
-        return;
-    }
-    // some metadata is enabled: mode is always there
-    mode_ = static_cast<unsigned int>(stoul(db_val.substr(0, pos)));
-    db_val.erase(0, pos + 1);
-    // size is also there
-    pos = db_val.find(MSP);
-    if (pos != std::string::npos) {  // delimiter found. more metadata is coming
-        size_ = stol(db_val.substr(0, pos));
-        db_val.erase(0, pos + 1);
-    } else {
-        size_ = stol(db_val);
-        return;
-    }
+Metadata::Metadata(const std::string& binary_str) {
+    size_t read = 0;
+
+    auto ptr = binary_str.data();
+    mode_ = static_cast<unsigned int>(std::stoul(ptr, &read));
+    // we read something
+    assert(read > 0);
+    ptr += read;
+
+    // last parsed char is the separator char
+    assert(*ptr == MSP);
+    // yet we have some character to parse
+
+    size_ = std::stol(++ptr, &read);
+    assert(read > 0);
+    ptr += read;
+
     // The order is important. don't change.
     if (MDATA_USE_ATIME) {
-        pos = db_val.find(MSP);
-        atime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        atime_ = static_cast<time_t>(std::stol(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_MTIME) {
-        pos = db_val.find(MSP);
-        mtime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        mtime_ = static_cast<time_t>(std::stol(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_CTIME) {
-        pos = db_val.find(MSP);
-        ctime_ = static_cast<time_t>(stol(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        ctime_ = static_cast<time_t>(std::stol(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_UID) {
-        pos = db_val.find(MSP);
-        uid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        uid_ = static_cast<uid_t>(std::stoul(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_GID) {
-        pos = db_val.find(MSP);
-        gid_ = static_cast<uid_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        gid_ = static_cast<gid_t>(std::stoul(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_INODE_NO) {
-        pos = db_val.find(MSP);
-        inode_no_ = static_cast<ino_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        inode_no_ = static_cast<ino_t>(std::stoul(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_LINK_CNT) {
-        pos = db_val.find(MSP);
-        link_count_ = static_cast<nlink_t>(stoul(db_val.substr(0, pos)));
-        db_val.erase(0, pos + 1);
+        assert(*ptr == MSP);
+        link_count_ = static_cast<nlink_t>(std::stoul(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
     if (MDATA_USE_BLOCKS) { // last one will not encounter a delimiter anymore
-        blocks_ = static_cast<blkcnt_t>(stoul(db_val));
+        assert(*ptr == MSP);
+        blocks_ = static_cast<blkcnt_t>(std::stoul(++ptr, &read));
+        assert(read > 0);
+        ptr += read;
     }
+    // we consumed all the binary string
+    assert(*ptr == '\0');
 }
 
 std::string Metadata::serialize() const

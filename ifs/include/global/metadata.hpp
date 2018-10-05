@@ -24,7 +24,8 @@ private:
 public:
     Metadata();
     Metadata(mode_t mode);
-    Metadata(std::string db_val);
+    // Construct from a binary representation of the object
+    Metadata(const std::string& binary_str);
 
     std::string serialize() const;
 
