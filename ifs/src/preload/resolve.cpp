@@ -111,7 +111,7 @@ bool resolve_path (const std::string& path, std::string& resolved, bool resolve_
                 if (!resolve_last_link && end == path.size()) {
                     continue;
                 }
-                char link_resolved[PATH_MAX_LEN];
+                char link_resolved[st.st_size + 1];
                 if (realpath(resolved.c_str(), link_resolved) == nullptr) {
                     CTX->log()->error("{}() Failed to get realpath for link '{}'. Error: {}", __func__, resolved, strerror(errno));
                     resolved.append(path, end, std::string::npos);
