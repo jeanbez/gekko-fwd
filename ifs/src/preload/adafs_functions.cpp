@@ -292,6 +292,12 @@ int adafs_dup2(const int oldfd, const int newfd) {
 
 ssize_t adafs_pwrite_ws(int fd, const char * buf, size_t count, off64_t offset) {
     auto adafs_fd = CTX->file_map()->get(fd);
+    if (adafs_fd->type() != FileType::regular) {
+        assert(adafs_fd->type() == FileType::directory);
+        CTX->log()->warn("{}() cannot read from directory", __func__);
+        errno = EISDIR;
+        return -1;
+    }
     auto path = make_shared<string>(adafs_fd->path());
     CTX->log()->trace("{}() fd: {}, count: {}, offset: {}", __func__, fd, count, offset);
     auto append_flag = adafs_fd->get_flag(OpenFile_flags::append);
@@ -381,6 +387,12 @@ ssize_t adafs_read(int fd, void* buf, size_t count) {
 
 ssize_t adafs_pread_ws(int fd, void* buf, size_t count, off64_t offset) {
     auto adafs_fd = CTX->file_map()->get(fd);
+    if (adafs_fd->type() != FileType::regular) {
+        assert(adafs_fd->type() == FileType::directory);
+        CTX->log()->warn("{}() cannot read from directory", __func__);
+        errno = EISDIR;
+        return -1;
+    }
     auto path = make_shared<string>(adafs_fd->path());
     CTX->log()->trace("{}() fd: {}, count: {}, offset: {}", __func__, fd, count, offset);
     // Zeroing buffer before read is only relevant for sparse files. Otherwise sparse regions contain invalid data.
