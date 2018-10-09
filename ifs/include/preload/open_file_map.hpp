@@ -29,6 +29,7 @@ enum class FileType {
 
 class OpenFile {
 protected:
+    FileType type_;
     std::string path_;
     std::array<bool, static_cast<int>(OpenFile_flags::flag_count)> flags_ = {false};
     unsigned long pos_;
@@ -38,7 +39,7 @@ protected:
 public:
     // multiple threads may want to update the file position if fd has been duplicated by dup()
 
-    OpenFile(const std::string& path, int flags);
+    OpenFile(const std::string& path, int flags, FileType type = FileType::regular);
 
     ~OpenFile();
 
@@ -55,6 +56,7 @@ public:
 
     void set_flag(OpenFile_flags flag, bool value);
 
+    FileType type() const;
 };
 
 

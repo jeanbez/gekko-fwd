@@ -7,7 +7,10 @@
 
 using namespace std;
 
-OpenFile::OpenFile(const string& path, const int flags) : path_(path) {
+OpenFile::OpenFile(const string& path, const int flags, FileType type) :
+    type_(type),
+    path_(path)
+{
     // set flags to OpenFile
     if (flags & O_CREAT)
         flags_[to_underlying(OpenFile_flags::creat)] = true;
@@ -62,6 +65,10 @@ void OpenFile::set_flag(OpenFile_flags flag, bool value) {
     flags_[to_underlying(flag)] = value;
 }
 
+FileType OpenFile::type() const {
+    return type_;
+}
+
 // OpenFileMap starts here
 
 shared_ptr<OpenFile> OpenFileMap::get(int fd) {
@@ -76,12 +83,10 @@ shared_ptr<OpenFile> OpenFileMap::get(int fd) {
 
 shared_ptr<OpenDir> OpenFileMap::get_dir(int dirfd) {
     auto f = get(dirfd);
-    if(f == nullptr){
+    if (f == nullptr || f->type() != FileType::directory) {
         return nullptr;
     }
-    auto open_dir = static_pointer_cast<OpenDir>(f);
-    // If open_file is not an OpenDir we are returning nullptr
-    return open_dir;
+    return static_pointer_cast<OpenDir>(f);
 }
 
 bool OpenFileMap::exist(const int fd) {
@@ -186,6 +191,3 @@ int OpenFileMap::get_fd_idx() {
     std::lock_guard<std::mutex> inode_lock(fd_idx_mutex);
     return fd_idx;
 }
-
-
-
