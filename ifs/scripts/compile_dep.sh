@@ -301,7 +301,7 @@ prepare_build_dir ${CURR}
 cd ${CURR}
 ./autogen.sh
 cd ${CURR}/build
-../configure --prefix=${INSTALL} --enable-perf-opt --disable-checks
+../configure --prefix=${INSTALL} --enable-valgrind
 make -j${CORES}
 make install
 [ "${PERFORM_TEST}" ] && make check
