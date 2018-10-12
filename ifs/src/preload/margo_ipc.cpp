@@ -16,13 +16,12 @@ void send_minimal_ipc(const hg_id_t minimal_id) {
     printf("minimal RPC is running...\n");
 
     /* create handle */
-    hg_addr_t local_addr;
-    auto ret = margo_addr_self(ld_margo_rpc_id, &local_addr);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() unable to retrieve local address", __func__);
+    auto local_addr = get_local_addr();
+    if (local_addr == HG_ADDR_NULL) {
+        CTX->log()->error("{}() Unable to lookup local addr", __func__);
         return;
     }
-    ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
+    auto ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
     if (ret != HG_SUCCESS) {
         margo_addr_free(ld_margo_rpc_id, local_addr);
         CTX->log()->error("{}() creating handle for failed", __func__);
@@ -60,13 +59,12 @@ bool ipc_send_get_fs_config() {
     ipc_config_out_t out{};
     // fill in
     in.dummy = 0; // XXX should be removed. havent checked yet how empty input with margo works
-    hg_addr_t local_addr;
-    auto ret = margo_addr_self(ld_margo_rpc_id, &local_addr);
-    if (ret != HG_SUCCESS) {
-        CTX->log()->error("{}() unable to retrieve local address", __func__);
+    auto local_addr = get_local_addr();
+    if (local_addr == HG_ADDR_NULL) {
+        CTX->log()->error("{}() Unable to lookup local addr", __func__);
         return false;
     }
-    ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
+    auto ret = margo_create(ld_margo_rpc_id, local_addr, rpc_config_id, &handle);
     if (ret != HG_SUCCESS) {
         margo_addr_free(ld_margo_rpc_id, local_addr);
         CTX->log()->error("{}() creating handle for failed", __func__);

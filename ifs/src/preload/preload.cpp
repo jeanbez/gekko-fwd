@@ -102,6 +102,7 @@ bool init_margo_client(const std::string& na_plugin) {
  * This function is only called in the preload constructor and initializes Argobots and Margo clients
  */
 void init_ld_environment_() {
+    //use rpc_addresses here to avoid "static initialization order problem"
     if (!init_margo_client(RPC_PROTOCOL)) {
         CTX->log()->error("{}() Unable to initialize Margo IPC client.", __func__);
         exit(EXIT_FAILURE);
@@ -211,6 +212,6 @@ void destroy_preload() {
     // Might been solved in margo 0.3. It is not an issue with Omnipath for sure. Maybe CCI only issue.
     margo_finalize(ld_margo_rpc_id);
     CTX->log()->debug("{}() Shut down Margo RPC client successful", __func__);
-    rpc_addresses.clear();
+    CTX->rpc_addresses().clear();
     CTX->log()->info("All services shut down. Client shutdown complete.");
 }

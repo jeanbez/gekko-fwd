@@ -146,46 +146,31 @@ bool read_system_hostfile() {
     return true;
 }
 
-hg_addr_t get_remote_addr(uint64_t host) {
-        hg_addr_t svr_addr = HG_ADDR_NULL;
-        std::string remote_uri;
-        auto hostname = CTX->fs_conf()->hosts.at(host) + HOSTNAME_SUFFIX;
-        // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
-        if (CTX->fs_conf()->sys_hostfile.count(hostname) == 1) {
-            auto remote_ip = CTX->fs_conf()->sys_hostfile.at(hostname);
-            remote_uri = RPC_PROTOCOL + "://"s + remote_ip + ":"s + CTX->fs_conf()->rpc_port;
-        } else {
-            remote_uri = RPC_PROTOCOL + "://"s + hostname + ":"s + CTX->fs_conf()->rpc_port;
+hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
+    // try to look up 3 times before erroring out
+    hg_return_t ret;
+    hg_addr_t remote_addr = HG_ADDR_NULL;
+    ::random_device rd; // obtain a random number from hardware
+    unsigned int attempts = 0;
+    do {
+        ret = margo_addr_lookup(ld_margo_rpc_id, uri.c_str(), &remote_addr);
+        if (ret == HG_SUCCESS) {
+            break;
         }
-
-        // fallback hostname to use for lookup
-        CTX->log()->trace("generated remote_addr {} for hostname {} with rpc_port {}",
-                         remote_addr, hostname, CTX->fs_conf()->rpc_port);
-
-        // try to look up 3 times before erroring out
-        hg_return_t ret;
-        unsigned int attempts = 0
-        do {
-            ret = margo_addr_lookup(ld_margo_rpc_id, remote_addr.c_str(), &svr_addr);
-            if (ret == HG_SUCCESS) {
-                break;
-            }
-            CTX->log()->warning("{}() Failed to lookup address {}. [{}/4]", __func__, remote_addr, attempts + 1);
-            // Wait a random amount of time and try again
-            ::mt19937 eng(rd()); // seed the random generator
-            ::uniform_int_distribution<> distr(50, 50 * (i + 2)); // define the range
-            ::this_thread::sleep_for(std::chrono::milliseconds(distr(eng)));
-        } while (++attepts < 4)
-        return svr_addr;
+        CTX->log()->warn("{}() Failed to lookup address {}. Attempts [{}/3]", __func__, uri, attempts + 1);
+        // Wait a random amount of time and try again
+        ::mt19937 g(rd()); // seed the random generator
+        ::uniform_int_distribution<> distr(50, 50 * (attempts + 2)); // define the range
+        ::this_thread::sleep_for(std::chrono::milliseconds(distr(g)));
+    } while (++attempts < 3);
+    return remote_addr;
 }
 
-bool lookup_local_host() {
+hg_addr_t get_local_addr() {
+    //TODO check if we need to use here the HOSTNAME_SUFFIX
     rpc_addresses = std::make_unique<std::unordered_map<uint64_t, hg_addr_t>>();
-    auto remote_addr = get_remote_addr(host);
-    rpc_addresses.insert(make_pair(CTX->fs_conf()->host_id))if (remote_addr == HG_ADDR_NULL) {
-        CTX->log()->error("{}() Failed to lookup address {}", __func__, remote_addr);
-        return false;
-    }
+    auto local_uri = RPC_PROTOCOL + "://localhost:"s + std::to_string(RPC_PORT);
+    return margo_addr_lookup_retry(local_uri);
 }
 
 bool lookup_all_hosts() {
@@ -200,14 +185,33 @@ bool lookup_all_hosts() {
     ::mt19937 g(rd()); // seed the random generator
     ::shuffle(hosts.begin(), hosts.end(), g); // Shuffle hosts vector
     // lookup addresses and put abstract server addresses into rpc_addresses
+    hg_addr_t remote_addr = HG_ADDR_NULL;
+    std::string remote_uri;
     for (auto& host : hosts) {
         if (host == CTX->fs_conf()->host_id) {
-            continue;
-        }
-        auto remote_addr = get_remote_addr(host);
-        if (remote_addr == HG_ADDR_NULL) {
-            CTX->log()->error("{}() Failed to lookup address {}", __func__, remote_addr);
-            return false;
+            remote_addr = get_local_addr();
+            if (remote_addr == HG_ADDR_NULL) {
+                CTX->log()->error("{}() Failed to lookup local address", __func__);
+                return false;
+            }
+        } else {
+            auto hostname = CTX->fs_conf()->hosts.at(host) + HOSTNAME_SUFFIX;
+            // get the ip address from /etc/hosts which is mapped to the sys_hostfile map
+            if (CTX->fs_conf()->sys_hostfile.count(hostname) == 1) {
+                auto remote_ip = CTX->fs_conf()->sys_hostfile.at(hostname);
+                remote_uri = RPC_PROTOCOL + "://"s + remote_ip + ":"s + CTX->fs_conf()->rpc_port;
+            } else {
+                // fallback hostname to use for lookup
+                remote_uri = RPC_PROTOCOL + "://"s + hostname + ":"s + CTX->fs_conf()->rpc_port;
+            }
+
+            remote_addr = margo_addr_lookup_retry(remote_uri);
+            if (remote_addr == HG_ADDR_NULL) {
+                CTX->log()->error("{}() Failed to lookup address {}", __func__, remote_uri);
+                return false;
+            }
+            CTX->log()->trace("generated remote_addr {} for hostname {} with rpc_port {}",
+                    remote_uri, hostname, CTX->fs_conf()->rpc_port);
         }
         rpc_addresses->insert(make_pair(host, remote_addr));
     }
@@ -231,8 +235,8 @@ void cleanup_addresses() {
  * @return
  */
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-    auto address_lookup = rpc_addresses->find(hostid);
-    auto found = address_lookup != rpc_addresses->end();
+    auto address_lookup = CTX->rpc_addresses().find(hostid);
+    auto found = address_lookup != CTX->rpc_addresses().end();
     if (found) {
         svr_addr = address_lookup->second;
         CTX->log()->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);
