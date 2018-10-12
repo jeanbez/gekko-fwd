@@ -41,7 +41,7 @@ int rpc_send_mk_node(const std::string& path, const mode_t mode) {
     in.mode = mode;
     // Create handle
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_mk_node_id, rpc_mk_node_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_mk_node_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -84,7 +84,7 @@ int rpc_send_access(const std::string& path, const int mask) {
     in.path = path.c_str();
     in.mask = mask;
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_access_id, rpc_access_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_access_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -134,7 +134,7 @@ int rpc_send_stat(const std::string& path, string& attr) {
     // fill in
     in.path = path.c_str();
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_stat_id, rpc_stat_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_stat_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -185,7 +185,7 @@ int rpc_send_decr_size(const std::string& path, size_t length) {
     in.length = length;
 
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_decr_size_id, rpc_decr_size_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_decr_size_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -247,9 +247,9 @@ int rpc_send_rm_node(const std::string& path, const bool remove_metadentry_only)
         // create handle
         // if only the metadentry needs to removed send one rpc to metadentry's responsible node
         if (remove_metadentry_only)
-            ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, path, rpc_handles[i], false);
+            ret = margo_create_wrap(rpc_rm_node_id, path, rpc_handles[i]);
         else
-            ret = margo_create_wrap(ipc_rm_node_id, rpc_rm_node_id, i, rpc_handles[i], false);
+            ret = margo_create_wrap_helper(rpc_rm_node_id, i, rpc_handles[i]);
         if (ret != HG_SUCCESS) {
             CTX->log()->warn("{}() Unable to create Mercury handle", __func__);
             // We use continue here to remove at least some data
@@ -324,7 +324,7 @@ int rpc_send_update_metadentry(const string& path, const Metadata& md, const Met
     in.ctime_flag = bool_to_merc_bool(md_flags.ctime);
 
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_update_metadentry_id, rpc_update_metadentry_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_update_metadentry_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -374,7 +374,7 @@ int rpc_send_update_metadentry_size(const string& path, const size_t size, const
     int err = EUNKNOWN;
 
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_update_metadentry_size_id, rpc_update_metadentry_size_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_update_metadentry_size_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -418,7 +418,7 @@ int rpc_send_get_metadentry_size(const std::string& path, off64_t& ret_size) {
     int err = EUNKNOWN;
 
     CTX->log()->debug("{}() Creating Mercury handle ...", __func__);
-    auto ret = margo_create_wrap(ipc_get_metadentry_size_id, rpc_get_metadentry_size_id, path, handle, false);
+    auto ret = margo_create_wrap(rpc_get_metadentry_size_id, path, handle);
     if (ret != HG_SUCCESS) {
         errno = EBUSY;
         return -1;
@@ -479,24 +479,16 @@ void rpc_send_get_dirents(OpenDir& open_dir){
         rpc_in[target_host].path = root_dir.c_str();
         recv_buffers[target_host] = recv_buff.get() + (target_host * per_host_buff_size);
 
-        if(is_local_op(target_host)){
-            hg_ret = margo_bulk_create(
-                    ld_margo_ipc_id, 1,
-                    reinterpret_cast<void**>(&recv_buffers[target_host]),
-                    &per_host_buff_size,
-                    HG_BULK_WRITE_ONLY, &(rpc_in[target_host].bulk_handle));
-        } else {
-            hg_ret = margo_bulk_create(
+        hg_ret = margo_bulk_create(
                     ld_margo_rpc_id, 1,
                     reinterpret_cast<void**>(&recv_buffers[target_host]),
                     &per_host_buff_size,
                     HG_BULK_WRITE_ONLY, &(rpc_in[target_host].bulk_handle));
-        }
         if(hg_ret != HG_SUCCESS){
             throw std::runtime_error("Failed to create margo bulk handle");
         }
 
-        hg_ret = margo_create_wrap(ipc_get_dirents_id, rpc_get_dirents_id, target_host, rpc_handles[target_host], false);
+        hg_ret = margo_create_wrap_helper(rpc_get_dirents_id, target_host, rpc_handles[target_host]);
         if (hg_ret != HG_SUCCESS) {
             std::runtime_error("Failed to create margo handle");
         }

@@ -1,0 +1,70 @@
+From 0609a71efbc02dc3d65768c9219770277c4329de Mon Sep 17 00:00:00 2001
+From: Tommaso Tocci <tommaso@tocci.pro>
+Date: Thu, 11 Oct 2018 23:46:19 +0200
+Subject: [PATCH] Add hg_init_info to margo init
+
+---
+ include/margo.h |  8 ++++++++
+ src/margo.c     | 13 +++++++++++--
+ 2 files changed, 19 insertions(+), 2 deletions(-)
+
+diff --git a/include/margo.h b/include/margo.h
+index a5f7587..774b1f6 100644
+--- a/include/margo.h
++++ b/include/margo.h
+@@ -46,6 +46,7 @@ typedef ABT_eventual margo_request;
+ /**
+  * Initializes margo library.
+  * @param [in] addr_str            Mercury host address with port number
++ * @param [in] hg_init_info		   Mercury initialization options
+  * @param [in] mode                Mode to run Margo in:
+  *                                     - MARGO_CLIENT_MODE
+  *                                     - MARGO_SERVER_MODE
+@@ -67,6 +68,13 @@ typedef ABT_eventual margo_request;
+  * call margo_wait_for_finalize() after margo_init() to relinguish control to 
+  * Margo.
+  */
++margo_instance_id margo_init_info(
++    const char *addr_str,
++    int mode,
++    const struct hg_init_info *hg_init_info,
++    int use_progress_thread,
++    int rpc_thread_count);
++
+ margo_instance_id margo_init(
+     const char *addr_str,
+     int mode,
+diff --git a/src/margo.c b/src/margo.c
+index ea73fc2..da8f69e 100644
+--- a/src/margo.c
++++ b/src/margo.c
+@@ -171,7 +171,16 @@ static hg_return_t margo_handle_cache_put(margo_instance_id mid,
+ static hg_id_t margo_register_internal(margo_instance_id mid, hg_id_t id,
+     hg_proc_cb_t in_proc_cb, hg_proc_cb_t out_proc_cb, hg_rpc_cb_t rpc_cb, ABT_pool pool);
+ 
+-margo_instance_id margo_init(const char *addr_str, int mode,
++margo_instance_id margo_init(const char *addr_str,
++	int mode,
++    int use_progress_thread, int rpc_thread_count)
++{
++	return margo_init_info(addr_str, mode, NULL, use_progress_thread, rpc_thread_count);
++}
++
++margo_instance_id margo_init_info(const char *addr_str,
++	int mode,
++	const struct hg_init_info *hg_init_info,
+     int use_progress_thread, int rpc_thread_count)
+ {
+     ABT_xstream progress_xstream = ABT_XSTREAM_NULL;
+@@ -268,7 +277,7 @@ margo_instance_id margo_init(const char *addr_str, int mode,
+         rpc_pool = progress_pool;
+     }
+ 
+-    hg_class = HG_Init(addr_str, listen_flag);
++    hg_class = HG_Init_opt(addr_str, listen_flag, hg_init_info);
+     if(!hg_class) goto err;
+ 
+     hg_context = HG_Context_create(hg_class);
+-- 
+2.19.1
+

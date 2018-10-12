@@ -3,7 +3,6 @@
 #define LFS_RPC_DEFS_HPP
 
 extern "C" {
-#include <mercury.h>
 #include <margo.h>
 }
 

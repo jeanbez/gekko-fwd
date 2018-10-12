@@ -289,7 +289,7 @@ fi
 cd ${CURR}/build
 $CMAKE -DMERCURY_USE_SELF_FORWARD:BOOL=ON -DMERCURY_USE_CHECKSUMS:BOOL=OFF -DBUILD_TESTING:BOOL=ON \
 -DMERCURY_USE_BOOST_PP:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_INSTALL_PREFIX=${INSTALL} \
--DCMAKE_BUILD_TYPE:STRING=Release -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../
+-DCMAKE_BUILD_TYPE:STRING=Debug -DMERCURY_USE_EAGER_BULK:BOOL=ON ${USE_BMI} ${USE_CCI} ${USE_OFI} ../
 make -j${CORES}
 make install
 
@@ -311,6 +311,8 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/margo
 prepare_build_dir ${CURR}
 cd ${CURR}
+echo "########## Applying allow init option path"
+git apply ${PATCH_DIR}/margo_allow_init_options.patch
 ./prepare.sh
 cd ${CURR}/build
 ../configure --prefix=${INSTALL} PKG_CONFIG_PATH=${INSTALL}/lib/pkgconfig CFLAGS="-Wall -O3"

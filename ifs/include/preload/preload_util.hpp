@@ -26,27 +26,9 @@ struct MetadentryUpdateFlags {
 };
 
 // Margo instances
-extern margo_instance_id ld_margo_ipc_id;
 extern margo_instance_id ld_margo_rpc_id;
-// local daemon address for margo ipc client
-extern hg_addr_t daemon_svr_addr;
-// IPC IDs
-extern hg_id_t ipc_minimal_id;
-extern hg_id_t ipc_config_id;
-extern hg_id_t ipc_mk_node_id;
-extern hg_id_t ipc_access_id;
-extern hg_id_t ipc_stat_id;
-extern hg_id_t ipc_rm_node_id;
-extern hg_id_t ipc_decr_size_id;
-extern hg_id_t ipc_update_metadentry_id;
-extern hg_id_t ipc_get_metadentry_size_id;
-extern hg_id_t ipc_update_metadentry_size_id;
-extern hg_id_t ipc_write_data_id;
-extern hg_id_t ipc_read_data_id;
-extern hg_id_t ipc_trunc_data_id;
-extern hg_id_t ipc_get_dirents_id;
-extern hg_id_t ipc_chunk_stat_id;
 // RPC IDs
+extern hg_id_t rpc_config_id;
 extern hg_id_t rpc_minimal_id;
 extern hg_id_t rpc_mk_node_id;
 extern hg_id_t rpc_stat_id;
@@ -78,10 +60,11 @@ void cleanup_addresses();
 
 bool get_addr_by_hostid(uint64_t hostid, hg_addr_t& svr_addr);
 
-bool is_local_op(size_t recipient);
+hg_return margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient,
+                                   hg_handle_t& handle);
 
-hg_return margo_create_wrap(hg_id_t ipc_id, hg_id_t rpc_id, const std::string&, hg_handle_t& handle, bool force_rpc);
+hg_return margo_create_wrap(const hg_id_t rpc_id, const std::string&,
+                            hg_handle_t& handle);
 
-hg_return margo_create_wrap(const hg_id_t ipc_id, const hg_id_t rpc_id, const size_t& recipient, hg_handle_t& handle, bool force_rpc);
 
 #endif //IFS_PRELOAD_UTIL_HPP
