@@ -58,11 +58,6 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize margo rpc server.", __func__);
         return false;
     }
-    // Init margo for RPC
-    if (!init_ipc_server()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Margo IPC server.", __func__);
-        return false;
-    }
     // Init Argobots ESs to drive IO
     if (!init_io_tasklet_pool()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
@@ -157,52 +152,6 @@ bool init_io_tasklet_pool() {
     return true;
 }
 
-bool init_ipc_server() {
-    auto protocol_port = "na+sm://"s;
-    hg_addr_t addr_self;
-    hg_size_t addr_self_cstring_sz = 128;
-    char addr_self_cstring[128];
-
-
-    ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo IPC server...", __func__);
-    // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_IPC_HANDLER_XSTREAMS);
-
-    if (mid == MARGO_INSTANCE_NULL) {
-        ADAFS_DATA->spdlogger()->error("{}() margo_init() failed to initialize the Margo IPC server", __func__);
-        return false;
-    }
-#ifdef MARGODIAG
-    margo_diag_start(mid);
-#endif
-    // Figure out what address this server is listening on (must be freed when finished)
-    auto hret = margo_addr_self(mid, &addr_self);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() margo_addr_self() Failed to retrieve server IPC address", __func__);
-        margo_finalize(mid);
-        return false;
-    }
-    // Convert the address to a cstring (with \0 terminator).
-    hret = margo_addr_to_string(mid, addr_self_cstring, &addr_self_cstring_sz, addr_self);
-    if (hret != HG_SUCCESS) {
-        ADAFS_DATA->spdlogger()->error("{}() margo_addr_to_string() Failed to convert address to cstring", __func__);
-        margo_addr_free(mid, addr_self);
-        margo_finalize(mid);
-        return false;
-    }
-    margo_addr_free(mid, addr_self);
-
-    ADAFS_DATA->spdlogger()->info("{}() Margo IPC server initialized. Accepting IPCs on PID {}", __func__,
-                                  addr_self_cstring);
-    // Put context and class into RPC_data object
-    RPC_DATA->server_ipc_mid(mid);
-
-    // register RPCs
-    register_server_rpcs(mid);
-
-    return true;
-}
-
 bool init_rpc_server() {
     auto protocol_port = RPC_PROTOCOL + "://localhost:"s + to_string(RPC_PORT);
     hg_addr_t addr_self;
@@ -210,7 +159,11 @@ bool init_rpc_server() {
     char addr_self_cstring[128];
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
     // Start Margo (this will also initialize Argobots and Mercury internally)
-    auto mid = margo_init(protocol_port.c_str(), MARGO_SERVER_MODE, 1, DAEMON_RPC_HANDLER_XSTREAMS);
+    struct hg_init_info hg_options;
+    hg_options.auto_sm = HG_FALSE;
+    hg_options.stats = HG_FALSE;
+    hg_options.na_class = nullptr;
+    auto mid = margo_init_info(protocol_port.c_str(), MARGO_SERVER_MODE, &hg_options, 1, DAEMON_RPC_HANDLER_XSTREAMS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
         return false;
