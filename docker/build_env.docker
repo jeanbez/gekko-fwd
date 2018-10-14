@@ -44,6 +44,7 @@ RUN yum -y -q update  && yum -y -q install \
 	devtoolset-7-gcc \
 	devtoolset-7-gcc-c++ \
     valgrind-devel \
+    libuuid-devel \
 && yum -y -q clean all
 
 # Enable gcc/g++ 7.x
@@ -102,6 +103,7 @@ RUN yum -y -q update  && yum -y -q install \
 	devtoolset-7-gcc \
 	devtoolset-7-gcc-c++ \
     valgrind-devel \
+    libuuid-devel \
 && yum -y -q clean all
 
 
