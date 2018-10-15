@@ -17,7 +17,6 @@ Metadata::Metadata(const mode_t mode) :
     uid_(),
     gid_(),
     mode_(mode),
-    inode_no_(0),
     link_count_(0),
     size_(0),
     blocks_(0)
@@ -71,12 +70,6 @@ Metadata::Metadata(const std::string& binary_str) {
         assert(read > 0);
         ptr += read;
     }
-    if (MDATA_USE_INODE_NO) {
-        assert(*ptr == MSP);
-        inode_no_ = static_cast<ino_t>(std::stoul(++ptr, &read));
-        assert(read > 0);
-        ptr += read;
-    }
     if (MDATA_USE_LINK_CNT) {
         assert(*ptr == MSP);
         link_count_ = static_cast<nlink_t>(std::stoul(++ptr, &read));
@@ -119,10 +112,6 @@ std::string Metadata::serialize() const
     if (MDATA_USE_GID) {
         s += MSP;
         s += std::to_string(gid_);
-    }
-    if (MDATA_USE_INODE_NO) {
-        s += MSP;
-        s += std::to_string(inode_no_);
     }
     if (MDATA_USE_LINK_CNT) {
         s += MSP;
@@ -202,14 +191,6 @@ mode_t Metadata::mode() const {
 
 void Metadata::mode(mode_t mode_) {
     Metadata::mode_ = mode_;
-}
-
-uint64_t Metadata::inode_no() const {
-    return inode_no_;
-}
-
-void Metadata::inode_no(uint64_t inode_no_) {
-    Metadata::inode_no_ = inode_no_;
 }
 
 nlink_t Metadata::link_count() const {
