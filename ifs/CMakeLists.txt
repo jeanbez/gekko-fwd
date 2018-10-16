@@ -114,7 +114,7 @@ if(USE_BMI)
     add_definitions(-DRPC_PROTOCOL="bmi+tcp")
 endif()
 
-if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI)
+if (NOT USE_OFI_VERBS AND NOT USE_OFI_PSM2 AND NOT USE_CCI AND NOT USE_BMI AND NOT USE_OFI_TCP)
     message("* No Mercury NA plugin selected. BMI automatically selected ... Use -DUSE_{BMI,CCI,OFI_VERBS,OFI_PSM2}:BOOL=ON for other plugins")
     find_package(BMI REQUIRED)
     set(NA_LIB

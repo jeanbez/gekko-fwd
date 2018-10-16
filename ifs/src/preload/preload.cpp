@@ -80,8 +80,9 @@ void register_client_rpcs(margo_instance_id mid) {
  * @return
  */
 bool init_margo_client(const std::string& na_plugin) {
-    struct hg_init_info hg_options;
-    hg_options.auto_sm = HG_FALSE;
+    // IMPORTANT: this struct needs to be zeroed before use
+    struct hg_init_info hg_options = {};
+    hg_options.auto_sm = HG_TRUE;
     hg_options.stats = HG_FALSE;
     hg_options.na_class = nullptr;
 
@@ -212,6 +213,5 @@ void destroy_preload() {
     // Might been solved in margo 0.3. It is not an issue with Omnipath for sure. Maybe CCI only issue.
     margo_finalize(ld_margo_rpc_id);
     CTX->log()->debug("{}() Shut down Margo RPC client successful", __func__);
-    CTX->rpc_addresses().clear();
     CTX->log()->info("All services shut down. Client shutdown complete.");
 }

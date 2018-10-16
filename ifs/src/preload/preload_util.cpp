@@ -168,12 +168,12 @@ hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
 
 hg_addr_t get_local_addr() {
     //TODO check if we need to use here the HOSTNAME_SUFFIX
-    rpc_addresses = std::make_unique<std::unordered_map<uint64_t, hg_addr_t>>();
-    auto local_uri = RPC_PROTOCOL + "://localhost:"s + std::to_string(RPC_PORT);
+    auto local_uri = RPC_PROTOCOL + "://127.0.0.1:"s + std::to_string(RPC_PORT);
     return margo_addr_lookup_retry(local_uri);
 }
 
 bool lookup_all_hosts() {
+    rpc_addresses = std::make_unique<std::unordered_map<uint64_t, hg_addr_t>>();
     vector<uint64_t> hosts(CTX->fs_conf()->host_size);
     // populate vector with [0, ..., host_size - 1]
     ::iota(::begin(hosts), ::end(hosts), 0);
@@ -235,8 +235,8 @@ void cleanup_addresses() {
  * @return
  */
 bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
-    auto address_lookup = CTX->rpc_addresses().find(hostid);
-    auto found = address_lookup != CTX->rpc_addresses().end();
+    auto address_lookup = rpc_addresses->find(hostid);
+    auto found = address_lookup != rpc_addresses->end();
     if (found) {
         svr_addr = address_lookup->second;
         CTX->log()->trace("{}() RPC address lookup success with hostid {}", __func__, address_lookup->first);

@@ -258,10 +258,8 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         #libfabric
         CURR=${SOURCE}/libfabric
         prepare_build_dir ${CURR}
-        cd ${CURR}
-        ./autogen.sh
         cd ${CURR}/build
-        ../configure --prefix=${INSTALL}
+        ../configure --prefix=${INSTALL} --enable-tcp=yes
         make -j${CORES}
         make install
         [ "${PERFORM_TEST}" ] && make check

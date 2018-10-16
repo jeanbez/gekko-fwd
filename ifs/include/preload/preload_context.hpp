@@ -6,7 +6,6 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include <margo.h>
 
 /* Forward declarations */
 class OpenFileMap;
@@ -52,9 +51,6 @@ class PreloadContext {
     std::shared_ptr<Distributor> distributor_;
     std::shared_ptr<FsConfig> fs_conf_;
 
-    //Remove from here
-    std::map<uint64_t, hg_addr_t> rpc_addresses_;
-
     std::string cwd_;
     std::vector<std::string> mountdir_components_;
     std::string mountdir_;
@@ -93,8 +89,6 @@ class PreloadContext {
 
     void initialized(const bool& flag);
     bool initialized() const;
-
-    std::map<uint64_t, hg_addr_t>& rpc_addresses();
 };
 
 

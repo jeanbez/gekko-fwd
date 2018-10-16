@@ -133,8 +133,3 @@ void PreloadContext::initialized(const bool& flag) {
 bool PreloadContext::initialized() const {
     return initialized_;
 }
-
-std::map<uint64_t, hg_addr_t>& PreloadContext::rpc_addresses() {
-    return rpc_addresses_;
-}
-

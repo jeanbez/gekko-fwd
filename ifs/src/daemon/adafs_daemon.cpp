@@ -158,11 +158,12 @@ bool init_rpc_server() {
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
     ADAFS_DATA->spdlogger()->debug("{}() Initializing Margo RPC server...", __func__);
-    // Start Margo (this will also initialize Argobots and Mercury internally)
-    struct hg_init_info hg_options;
-    hg_options.auto_sm = HG_FALSE;
+    // IMPORTANT: this struct needs to be zeroed before use
+    struct hg_init_info hg_options = {};
+    hg_options.auto_sm = HG_TRUE;
     hg_options.stats = HG_FALSE;
     hg_options.na_class = nullptr;
+    // Start Margo (this will also initialize Argobots and Mercury internally)
     auto mid = margo_init_info(protocol_port.c_str(), MARGO_SERVER_MODE, &hg_options, 1, DAEMON_RPC_HANDLER_XSTREAMS);
     if (mid == MARGO_INSTANCE_NULL) {
         ADAFS_DATA->spdlogger()->error("{}() margo_init failed to initialize the Margo RPC server", __func__);
