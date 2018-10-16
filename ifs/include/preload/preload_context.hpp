@@ -54,6 +54,7 @@ class PreloadContext {
     std::string cwd_;
     std::vector<std::string> mountdir_components_;
     std::string mountdir_;
+    std::string daemon_addr_str_;
     bool initialized_;
 
     public:
@@ -71,6 +72,9 @@ class PreloadContext {
     void mountdir(const std::string& path);
     const std::string& mountdir() const;
     const std::vector<std::string>& mountdir_components() const;
+
+    void daemon_addr_str(const std::string& path);
+    const std::string& daemon_addr_str() const;
 
     void cwd(const std::string& path);
     const std::string& cwd() const;

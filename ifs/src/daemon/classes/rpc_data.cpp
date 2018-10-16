@@ -37,10 +37,10 @@ void RPCData::io_streams(const vector<ABT_xstream>& io_streams) {
     RPCData::io_streams_ = io_streams;
 }
 
+const std::string& RPCData::self_addr_str() const {
+    return self_addr_str_;
+}
 
-
-
-
-
-
-
+void RPCData::self_addr_str(const std::string& addr_str) {
+    self_addr_str_ = addr_str;
+}

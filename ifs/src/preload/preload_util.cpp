@@ -100,6 +100,15 @@ int get_daemon_pid() {
             return -1;
         }
         // second line is mountdir
+        std::string daemon_addr;
+        if (getline(ifs, daemon_addr) && !daemon_addr.empty()) {
+            CTX->daemon_addr_str(daemon_addr);
+        } else {
+            CTX->log()->error("{}() ADA-FS daemon pid file contains no daemon address. Exiting ...", __func__);
+            ifs.close();
+            return -1;
+        }
+        // second line is mountdir
         if (getline(ifs, mountdir) && !mountdir.empty()) {
             CTX->mountdir(mountdir);
         } else {
@@ -168,8 +177,13 @@ hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
 
 hg_addr_t get_local_addr() {
     //TODO check if we need to use here the HOSTNAME_SUFFIX
-    auto local_uri = RPC_PROTOCOL + "://127.0.0.1:"s + std::to_string(RPC_PORT);
-    return margo_addr_lookup_retry(local_uri);
+    //auto local_uri = RPC_PROTOCOL + "://"s + get_my_hostname() + ":"s + std::to_string(RPC_PORT);
+    auto daemon_addr = CTX->daemon_addr_str();
+    auto last_separator = daemon_addr.find_last_of(';');
+    if (last_separator != std::string::npos) {
+        daemon_addr.erase(0, ++last_separator);
+    }
+    return margo_addr_lookup_retry(daemon_addr);
 }
 
 bool lookup_all_hosts() {

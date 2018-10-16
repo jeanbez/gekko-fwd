@@ -35,6 +35,16 @@ const std::vector<std::string>& PreloadContext::mountdir_components() const {
     return mountdir_components_;
 }
 
+void PreloadContext::daemon_addr_str(const std::string& addr) {
+    assert(!addr.empty());
+    daemon_addr_str_ = addr;
+}
+
+const std::string& PreloadContext::daemon_addr_str() const {
+    assert(!daemon_addr_str_.empty());
+    return daemon_addr_str_;
+}
+
 void PreloadContext::cwd(const std::string& path) {
     log_->debug("Setting CWD to '{}'", path);
     cwd_ = path;

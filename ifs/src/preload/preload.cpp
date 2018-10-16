@@ -87,7 +87,7 @@ bool init_margo_client(const std::string& na_plugin) {
     hg_options.na_class = nullptr;
 
     // Note: localhost should not be required and actually doesn't do anything. But it is required for OFI for Mercury to start
-    ld_margo_rpc_id = margo_init_info((na_plugin + "://localhost"s).c_str(), HG_FALSE, &hg_options, HG_FALSE, 1);
+    ld_margo_rpc_id = margo_init_info(na_plugin.c_str(), HG_FALSE, &hg_options, HG_FALSE, 1);
     if (ld_margo_rpc_id == MARGO_INSTANCE_NULL) {
         CTX->log()->error("{}() margo_init_pool failed to initialize the Margo client", __func__);
         return false;

@@ -16,6 +16,7 @@ private:
     // Argobots I/O pools and execution streams
     ABT_pool io_pool_;
     std::vector<ABT_xstream> io_streams_;
+    std::string self_addr_str_;
 
 public:
 
@@ -45,6 +46,10 @@ public:
     std::vector<ABT_xstream>& io_streams();
 
     void io_streams(const std::vector<ABT_xstream>& io_streams);
+
+    const std::string& self_addr_str() const;
+
+    void self_addr_str(const std::string& addr_str);
 
 
 };

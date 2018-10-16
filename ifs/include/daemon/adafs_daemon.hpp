@@ -35,6 +35,4 @@ bool register_daemon_proc();
 
 bool deregister_daemon_proc();
 
-std::string get_my_hostname(bool short_hostname);
-
 #endif //IFS_ADAFS_DAEMON_HPP

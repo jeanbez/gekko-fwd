@@ -1,5 +1,6 @@
 
 #include <global/rpc/rpc_utils.hpp>
+#include <unistd.h>
 
 using namespace std;
 
@@ -10,6 +11,27 @@ using namespace std;
  */
 hg_bool_t bool_to_merc_bool(const bool state) {
     return state ? static_cast<hg_bool_t>(HG_TRUE) : static_cast<hg_bool_t>(HG_FALSE);
+}
+
+
+/**
+ * Returns the machine's hostname
+ * @return
+ */
+std::string get_my_hostname(bool short_hostname) {
+    char hostname[1024];
+    auto ret = gethostname(hostname, 1024);
+    if (ret == 0) {
+        std::string hostname_s(hostname);
+        if (!short_hostname)
+            return hostname_s;
+        // get short hostname
+        auto pos = hostname_s.find("."s);
+        if (pos != std::string::npos)
+            hostname_s = hostname_s.substr(0, pos);
+        return hostname_s;
+    } else
+        return ""s;
 }
 
 /**

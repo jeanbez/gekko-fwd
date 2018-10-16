@@ -3,6 +3,7 @@
 #include <global/log_util.hpp>
 #include <global/rpc/ipc_types.hpp>
 #include <global/rpc/rpc_types.hpp>
+#include <global/rpc/rpc_utils.hpp>
 #include <global/rpc/distributor.hpp>
 #include <daemon/handler/rpc_defs.hpp>
 #include <daemon/adafs_ops/metadentry.hpp>
@@ -28,12 +29,6 @@ static condition_variable shutdown_please;
 static mutex mtx;
 
 bool init_environment() {
-    // Register daemon to system
-    if (!register_daemon_proc()) {
-        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
-        return false;
-    }
-
     // Initialize metadata db
     std::string metadata_path = ADAFS_DATA->metadir() + "/rocksdb"s;
     try {
@@ -58,6 +53,7 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() unable to initialize margo rpc server.", __func__);
         return false;
     }
+    
     // Init Argobots ESs to drive IO
     if (!init_io_tasklet_pool()) {
         ADAFS_DATA->spdlogger()->error("{}() Unable to initialize Argobots pool for I/O.", __func__);
@@ -84,6 +80,13 @@ bool init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Unable to write root metadentry to KV store: {}", __func__, e.what());
         return false;
     }
+    
+    // Register daemon to system
+    if (!register_daemon_proc()) {
+        ADAFS_DATA->spdlogger()->error("{}() Unable to register the daemon process to the system.", __func__);
+        return false;
+    }
+
     ADAFS_DATA->spdlogger()->info("Startup successful. Daemon is ready.");
     return true;
 }
@@ -153,7 +156,7 @@ bool init_io_tasklet_pool() {
 }
 
 bool init_rpc_server() {
-    auto protocol_port = RPC_PROTOCOL + "://localhost:"s + to_string(RPC_PORT);
+    auto protocol_port = RPC_PROTOCOL + "://"s + get_my_hostname(false) + ":"s + to_string(RPC_PORT);
     hg_addr_t addr_self;
     hg_size_t addr_self_cstring_sz = 128;
     char addr_self_cstring[128];
@@ -189,6 +192,8 @@ bool init_rpc_server() {
     }
     margo_addr_free(mid, addr_self);
 
+    std::string addr_self_str(addr_self_cstring);
+    RPC_DATA->self_addr_str(addr_self_str);
 
     ADAFS_DATA->spdlogger()->info("{}() Margo RPC server initialized. Accepting RPCs on address {}", __func__,
                                   addr_self_cstring);
@@ -274,9 +279,9 @@ bool register_daemon_proc() {
     }
     ofstream ofs(pid_file, ::ofstream::trunc);
     if (ofs) {
-        ofs << to_string(my_pid);
-        ofs << "\n";
-        ofs << ADAFS_DATA->mountdir();
+        ofs << to_string(my_pid) << std::endl;
+        ofs << RPC_DATA->self_addr_str() << std::endl;
+        ofs << ADAFS_DATA->mountdir() << std::endl;
     } else {
         cerr << "Unable to create daemon pid file at " << pid_file << endl;
         ADAFS_DATA->spdlogger()->error("{}() Unable to create daemon pid file at {}. No permissions?", __func__,
@@ -289,26 +294,6 @@ bool register_daemon_proc() {
 
 bool deregister_daemon_proc() {
     return bfs::remove(daemon_pid_path());
-}
-
-/**
- * Returns the machine's hostname
- * @return
- */
-string get_my_hostname(bool short_hostname) {
-    char hostname[1024];
-    auto ret = gethostname(hostname, 1024);
-    if (ret == 0) {
-        string hostname_s(hostname);
-        if (!short_hostname)
-            return hostname_s;
-        // get short hostname
-        auto pos = hostname_s.find("."s);
-        if (pos != std::string::npos)
-            hostname_s = hostname_s.substr(0, pos);
-        return hostname_s;
-    } else
-        return ""s;
 }
 
 void shutdown_handler(int dummy) {
