@@ -84,6 +84,16 @@ if (USE_OFI_PSM2)
     add_definitions(-DRPC_PROTOCOL="ofi+psm2")
 endif ()
 
+option(USE_OFI_TCP "Use libfabric plugin with TCP." OFF)
+if (USE_OFI_TCP)
+    find_package(LibFabric REQUIRED)
+    set(NA_LIB
+            ${NA_LIB}
+            ${LIBFABRIC_LIBRARIES}
+            )
+    add_definitions(-DRPC_PROTOCOL="ofi+tcp")
+endif ()
+
 option(USE_CCI "Use cci plugin." OFF)
 if(USE_CCI)
     find_package(CCI REQUIRED)
