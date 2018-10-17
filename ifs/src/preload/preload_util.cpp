@@ -264,7 +264,7 @@ bool get_addr_by_hostid(const uint64_t hostid, hg_addr_t& svr_addr) {
     return false;
 }
 
-inline hg_return
+hg_return
 margo_create_wrap_helper(const hg_id_t rpc_id, uint64_t recipient, hg_handle_t& handle) {
     hg_return_t ret;
     hg_addr_t svr_addr = HG_ADDR_NULL;
