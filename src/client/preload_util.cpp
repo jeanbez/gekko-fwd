@@ -104,7 +104,7 @@ vector<pair<string, string>> load_hosts_file(const std::string& lfpath) {
 }
 
 hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
-    CTX->log()->debug("{}() Lookink up address '{}'", __func__, uri);
+    CTX->log()->debug("{}() Looking up address '{}'", __func__, uri);
     // try to look up 3 times before erroring out
     hg_return_t ret;
     hg_addr_t remote_addr = HG_ADDR_NULL;
@@ -123,6 +123,23 @@ hg_addr_t margo_addr_lookup_retry(const std::string& uri) {
     } while (++attempts < 3);
     throw runtime_error(
             fmt::format("Failed to lookup address '{}', error: {}", uri, HG_Error_to_string(ret)));
+}
+
+uint64_t get_my_forwarder() {
+    uint64_t forwarder;
+
+    string forwarder_host;
+    char *parsed;
+
+    forwarder_host = gkfs::get_env_own("FORWARDER");
+    forwarder = strtoul(forwarder_host.c_str(), &parsed, 10);
+
+    if (parsed != forwarder_host.c_str() + forwarder_host.size()) {
+        throw runtime_error(
+            fmt::format("Failed to parse the forwarding host '{}'", forwarder_host));
+    }
+    
+    return forwarder;
 }
 
 void load_hosts() {

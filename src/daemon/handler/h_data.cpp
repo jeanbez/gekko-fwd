@@ -162,7 +162,8 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
-    SimpleHashDistributor distributor(host_id, host_size);
+    //SimpleHashDistributor distributor(host_id, host_size);
+    //ForwarderDistributor distributor(host_id, host_size);
 
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
@@ -198,8 +199,8 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        if (distributor.locate_data(in.path, chnk_id_file) != host_id)
-            continue;
+        //if (distributor.locate_data(in.path, chnk_id_file) != host_id)
+        //    continue;
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // offset case. Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {
@@ -366,7 +367,8 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     }
     auto const host_id = in.host_id;
     auto const host_size = in.host_size;
-    SimpleHashDistributor distributor(host_id, host_size);
+    //SimpleHashDistributor distributor(host_id, host_size);
+    //ForwarderDistributor distributor(host_id, host_size);
 
     auto path = make_shared<string>(in.path);
     // chnk_ids used by this host
@@ -394,8 +396,8 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     // Start to look for a chunk that hashes to this host with the first chunk in the buffer
     for (auto chnk_id_file = in.chunk_start; chnk_id_file < in.chunk_end || chnk_id_curr < in.chunk_n; chnk_id_file++) {
         // Continue if chunk does not hash to this host
-        if (distributor.locate_data(in.path, chnk_id_file) != host_id)
-            continue;
+        //if (distributor.locate_data(in.path, chnk_id_file) != host_id)
+        //    continue;
         chnk_ids_host[chnk_id_curr] = chnk_id_file; // save this id to host chunk list
         // Only relevant in the first iteration of the loop and if the chunk hashes to this host
         if (chnk_id_file == in.chunk_start && in.offset > 0) {

@@ -166,8 +166,22 @@ void init_ld_environment_() {
     }
 
     /* Setup distributor */
-    auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->local_host_id(), CTX->hosts().size());
-    CTX->distributor(simple_hash_dist);
+    //auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->local_host_id(), CTX->hosts().size());
+    //CTX->distributor(simple_hash_dist);
+
+    try {
+        CTX->fwd_host_id(get_my_forwarder());
+        if (CTX->fwd_host_id() > CTX->hosts().size()) {
+            throw std::runtime_error("Invalid forwarding host");
+        }
+
+        CTX->log()->debug("{}() Forward to {}", __func__, CTX->fwd_host_id());
+    } catch (std::exception& e){
+        exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+    }
+    
+    auto forwarder_dist = std::make_shared<ForwarderDistributor>(CTX->fwd_host_id(), CTX->hosts().size());
+    CTX->distributor(forwarder_dist);
 
     if (!rpc_send::get_fs_config()) {
         exit_error_msg(EXIT_FAILURE, "Unable to fetch file system configurations from daemon process through RPC.");

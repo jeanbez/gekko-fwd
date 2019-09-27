@@ -79,7 +79,10 @@ void ChunkStorage::trim_chunk_space(const std::string& file_path,
     auto chunk_dir = absolute(get_chunks_dir(file_path));
     const bfs::directory_iterator end;
 
-    for (bfs::directory_iterator chunk_file(chunk_dir); chunk_file != end; ++chunk_file) {
+    try {
+        bfs::directory_iterator chunk_file(chunk_dir);
+
+        for (; chunk_file != end; ++chunk_file) {
         auto chunk_path = chunk_file->path();
         auto chunk_id = std::stoul(chunk_path.filename().c_str());
         if(chunk_id >= chunk_start && chunk_id <= chunk_end) {
@@ -89,6 +92,13 @@ void ChunkStorage::trim_chunk_space(const std::string& file_path,
                 throw std::system_error(errno, std::system_category(), "Failed to remove chunk file");
             }
         }
+        }
+    } catch (const bfs::filesystem_error& e) {
+        if (e.code() == boost::system::errc::no_such_file_or_directory) {
+            return;
+        }
+
+        throw;
     }
 }
 

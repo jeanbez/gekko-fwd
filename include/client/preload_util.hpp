@@ -71,6 +71,7 @@ hg_addr_t get_local_addr();
 
 void load_hosts();
 bool lookup_all_hosts();
+uint64_t get_my_forwarder();
 
 void cleanup_addresses();
 
