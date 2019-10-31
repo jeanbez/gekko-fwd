@@ -161,7 +161,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
     auto const host_id = in.host_id;
-    auto const host_size = in.host_size;
+    //auto const host_size = in.host_size;
     //SimpleHashDistributor distributor(host_id, host_size);
     //ForwarderDistributor distributor(host_id, host_size);
 
@@ -365,8 +365,8 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
         ADAFS_DATA->spdlogger()->error("{}() Failed to access allocated buffer from bulk handle", __func__);
         return rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
     }
-    auto const host_id = in.host_id;
-    auto const host_size = in.host_size;
+    //auto const host_id = in.host_id;
+    //auto const host_size = in.host_size;
     //SimpleHashDistributor distributor(host_id, host_size);
     //ForwarderDistributor distributor(host_id, host_size);
 

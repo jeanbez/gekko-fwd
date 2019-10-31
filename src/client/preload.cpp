@@ -169,13 +169,21 @@ void init_ld_environment_() {
     //auto simple_hash_dist = std::make_shared<SimpleHashDistributor>(CTX->local_host_id(), CTX->hosts().size());
     //CTX->distributor(simple_hash_dist);
 
-    try {
+    /*try {
         CTX->fwd_host_id(get_my_forwarder());
         if (CTX->fwd_host_id() > CTX->hosts().size()) {
             throw std::runtime_error("Invalid forwarding host");
         }
 
         CTX->log()->debug("{}() Forward to {}", __func__, CTX->fwd_host_id());
+    } catch (std::exception& e){
+        exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
+    }*/
+
+    try {
+        load_forwarding_map();
+
+        CTX->log()->info("{}() Forward to {}", __func__, CTX->fwd_host_id());
     } catch (std::exception& e){
         exit_error_msg(EXIT_FAILURE, fmt::format("Unable set the forwarding host '{}'", e.what()));
     }
