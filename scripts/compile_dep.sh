@@ -217,6 +217,7 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/libconfig
 prepare_build_dir ${CURR}
 cd ${CURR}
+autoreconf
 ./configure
 make
 make install
