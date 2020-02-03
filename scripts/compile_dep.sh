@@ -212,6 +212,16 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
     fi
 fi
 
+echo "############################################################ Installing:  AGIOS"
+
+# AGIOS
+CURR=${SOURCE}/agios
+prepare_build_dir ${CURR}
+cd ${CURR}
+make clean
+make library
+make library_install
+
 echo "############################################################ Installing:  Mercury"
 
 # Mercury
