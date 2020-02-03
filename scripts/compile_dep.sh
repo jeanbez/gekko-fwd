@@ -211,16 +211,6 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         [ "${PERFORM_TEST}" ] && make check
     fi
 fi
-echo "############################################################ Installing:  LibConfig"
-
-# LibConfig
-CURR=${SOURCE}/libconfig
-prepare_build_dir ${CURR}
-cd ${CURR}
-autoreconf
-./configure
-make
-make install
 
 echo "############################################################ Installing:  AGIOS"
 
