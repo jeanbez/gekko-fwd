@@ -19,7 +19,7 @@ variables:
   GKFS_PRELOAD_LOG_PATH: "${CI_PROJECT_DIR}/logs/preload.log"
   GKFS_FORWARDER: 0
 
-image: gekkofs/gekkofs:build_env
+image: jeanbez/gekkofs-forwarding:latest
 
 compile dependencies:
   stage: build deps

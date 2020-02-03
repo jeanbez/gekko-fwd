@@ -211,9 +211,6 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         [ "${PERFORM_TEST}" ] && make check
     fi
 fi
-echo "############################################################ Installing:  LibConfig"
-
-yum -y -q install libconfig-devel
 
 echo "############################################################ Installing:  AGIOS"
 
@@ -221,6 +218,8 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/agios
 prepare_build_dir ${CURR}
 cd ${CURR}
+sed -i 's/\/usr\/lib\/x86_64-linux-gnu\/libconfig.so/\/usr\/lib64\/libconfig.so/g' Makefile
+sed -i 's/sudo//g' Makefile
 make clean
 make library
 make library_install
