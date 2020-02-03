@@ -13,6 +13,7 @@
 
 #include "client/intercept.hpp"
 #include "client/preload.hpp"
+#include "client/preload_util.hpp"
 #include "client/hooks.hpp"
 #include "global/configure.hpp"
 
@@ -218,6 +219,9 @@ static inline int hook(long syscall_number,
         *result = hook_mkdirat(AT_FDCWD,
                                reinterpret_cast<const char *>(arg0),
                                static_cast<mode_t>(arg1));
+
+        load_forwarding_map();
+
         break;
 
     case SYS_chmod:

@@ -11,6 +11,7 @@ set(DAEMON_SRC
     handler/h_metadentry.cpp
     handler/h_data.cpp
     handler/h_preload.cpp
+    scheduler/agios.cpp
     )
 set(DAEMON_HEADERS
     ../../include/version.hpp
@@ -20,6 +21,7 @@ set(DAEMON_HEADERS
     ../../include/global/rpc/rpc_utils.hpp
     ../../include/global/path_util.hpp
     ../../include/daemon/main.hpp
+    ../../include/daemon/scheduler/agios.hpp
     ../../include/daemon/ops/metadentry.hpp
     ../../include/daemon/classes/fs_data.hpp
     ../../include/daemon/classes/rpc_data.hpp

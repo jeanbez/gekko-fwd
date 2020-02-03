@@ -22,6 +22,7 @@
 #include <daemon/ops/metadentry.hpp>
 #include <daemon/backend/metadata/db.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
+#include <daemon/scheduler/agios.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -50,6 +51,10 @@ void init_environment() {
         ADAFS_DATA->spdlogger()->error("{}() Failed to initialize metadata DB: {}", __func__, e.what());
         throw;
     }
+
+    // Initialize AGIOS scheduler
+    ADAFS_DATA->spdlogger()->info("{}() Initializing AGIOS scheduler: '{}'", __func__, "/tmp/agios.conf");
+    agios_initialize();
 
     // Initialize data backend
     std::string chunk_storage_path = ADAFS_DATA->rootdir() + "/data/chunks"s;
@@ -131,6 +136,21 @@ void destroy_enviroment() {
 
     ADAFS_DATA->spdlogger()->info("{}() Closing metadata DB", __func__);
     ADAFS_DATA->close_mdb();
+
+    agios_exit();
+}
+
+void agios_initialize() {
+    char configuration[] = "/tmp/agios.conf";
+    
+    agios_client.process_request = agios_callback;
+    agios_client.process_requests = agios_callback_aggregated;
+    
+    if (agios_init(&agios_client, configuration, 0) != 0) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to initialize AGIOS scheduler: '/tmp/agios.conf'", __func__);   
+
+        agios_exit();
+    }
 }
 
 void init_io_tasklet_pool() {

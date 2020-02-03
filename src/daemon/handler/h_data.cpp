@@ -19,7 +19,12 @@
 #include <global/chunk_calc_util.hpp>
 #include <daemon/main.hpp>
 #include <daemon/backend/data/chunk_storage.hpp>
+#include <daemon/scheduler/agios.hpp>
 
+#define AGIOS_READ 0
+#define AGIOS_WRITE 1
+
+#define AGIOS_SERVER_ID_IGNORE 0
 
 using namespace std;
 
@@ -31,6 +36,9 @@ struct write_chunk_args {
     off64_t off;
     ABT_eventual eventual;
 };
+
+unordered_map<unsigned long long int, ABT_eventual> eventual_requests;
+pthread_mutex_t eventual_requests_lock;
 
 /**
  * Used by an argobots threads. Argument args has the following fields:
@@ -119,8 +127,10 @@ void cancel_abt_io(vector<ABT_task>* abt_tasks, vector<ABT_eventual>* abt_eventu
     }
 }
 
-
 static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
+    int *data;
+    ABT_eventual eventual = ABT_EVENTUAL_NULL;
+
     /*
      * 1. Setup
      */
@@ -141,6 +151,37 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     ADAFS_DATA->spdlogger()->debug("{}() path: {}, size: {}, offset: {}", __func__,
                                    in.path, bulk_size, in.offset);
+    
+    /* creating eventual */
+    ABT_eventual_create(sizeof(unsigned long long int), &eventual);
+
+    unsigned long long int request_id = generate_unique_id();
+    char *agios_path = (char*) in.path;
+
+    pthread_mutex_lock(&eventual_requests_lock);
+    eventual_requests[request_id] = eventual;
+    pthread_mutex_unlock(&eventual_requests_lock);
+
+    //we should call AGIOS before chunking (as that is an internal way to handle the requests)
+    if (agios_add_request(agios_path, AGIOS_WRITE, in.offset, in.total_chunk_size, &request_id, &agios_client, AGIOS_SERVER_ID_IGNORE)) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to send request to AGIOS", __func__);
+    } else {
+        ADAFS_DATA->spdlogger()->debug("{}() request {} was sent to AGIOS", __func__, request_id);
+    }
+
+    /* block until the eventual is signaled */
+    ABT_eventual_wait(eventual, (void **)&data);
+
+    unsigned long long int result = *data;
+    ADAFS_DATA->spdlogger()->debug("{}() request {} was unblocked (offset = {})!", __func__, result, in.offset);
+
+    ABT_eventual_free(&eventual);
+
+    // let AGIOS knows it can release the request, as it is completed
+    if (!agios_release_request(agios_path, AGIOS_WRITE, in.total_chunk_size, in.offset, 0, in.total_chunk_size)) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to release request from AGIOS", __func__);
+    }
+
     /*
      * 2. Set up buffers for pull bulk transfers
      */
@@ -260,6 +301,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
         // only the first chunk gets the offset. the chunks are sorted on the client side
         task_arg.off = (chnk_id_file == in.chunk_start) ? in.offset : 0;
         task_arg.eventual = task_eventuals[chnk_id_curr];
+
         auto abt_ret = ABT_task_create(RPC_DATA->io_pool(), write_file_abt, &task_args[chnk_id_curr],
                                        &abt_tasks[chnk_id_curr]);
         if (abt_ret != ABT_SUCCESS) {
@@ -275,6 +317,7 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
     if (chnk_size_left_host != 0)
         ADAFS_DATA->spdlogger()->warn("{}() Not all chunks were detected!!! Size left {}", __func__,
                                       chnk_size_left_host);
+
     /*
      * 4. Read task results and accumulate in out.io_size
      */
@@ -314,17 +357,22 @@ static hg_return_t rpc_srv_write_data(hg_handle_t handle) {
      */
     ADAFS_DATA->spdlogger()->debug("{}() Sending output response {}", __func__, out.err);
     ret = rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
+
     // free tasks after responding
     for (auto&& task : abt_tasks) {
-        ABT_task_join(task);
-        ABT_task_free(&task);
+            ABT_task_join(task);
+            ABT_task_free(&task);
     }
+
     return ret;
 }
 
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_write_data)
 
 static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
+    int *data;
+    ABT_eventual eventual = ABT_EVENTUAL_NULL;
+
     /*
      * 1. Setup
      */
@@ -345,6 +393,36 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     auto bulk_size = margo_bulk_get_size(in.bulk_handle);
     ADAFS_DATA->spdlogger()->debug("{}() path: {}, size: {}, offset: {}", __func__,
                                    in.path, bulk_size, in.offset);
+
+    /* creating eventual */
+    ABT_eventual_create(sizeof(unsigned long long int), &eventual);
+    
+    unsigned long long int request_id = generate_unique_id();
+    char *agios_path = (char*) in.path;
+
+    pthread_mutex_lock(&eventual_requests_lock);
+    eventual_requests[request_id] = eventual;
+    pthread_mutex_unlock(&eventual_requests_lock);
+
+    //we should call AGIOS before chunking (as that is an internal way to handle the requests)
+    if (agios_add_request(agios_path, AGIOS_READ, in.offset, in.total_chunk_size, &request_id, &agios_client, AGIOS_SERVER_ID_IGNORE)) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to send request to AGIOS", __func__);
+    } else {
+        ADAFS_DATA->spdlogger()->debug("{}() request {} was sent to AGIOS", __func__, request_id);
+    }
+
+    /* block until the eventual is signaled */
+    ABT_eventual_wait(eventual, (void **)&data);
+
+    unsigned long long int result = *data;
+    ADAFS_DATA->spdlogger()->debug("{}() request {} was unblocked (offset = {})!", __func__, result, in.offset);
+
+    ABT_eventual_free(&eventual);
+
+    // let AGIOS knows it can release the request, as it is completed
+    if (!agios_release_request(agios_path, AGIOS_READ, in.total_chunk_size, in.offset, 0, in.total_chunk_size)) {
+        ADAFS_DATA->spdlogger()->error("{}() Failed to release request from AGIOS", __func__);
+    }
 
     /*
      * 2. Set up buffers for pull bulk transfers
@@ -390,6 +468,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     vector<ABT_task> abt_tasks(in.chunk_n);
     vector<ABT_eventual> task_eventuals(in.chunk_n);
     vector<struct read_chunk_args> task_args(in.chunk_n);
+
     /*
      * 3. Calculate chunk sizes that correspond to this host and start tasks to read from disk
      */
@@ -453,6 +532,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     if (chnk_size_left_host != 0)
         ADAFS_DATA->spdlogger()->warn("{}() Not all chunks were detected!!! Size left {}", __func__,
                                       chnk_size_left_host);
+
     /*
      * 4. Read task results and accumulate in out.io_size
      */
@@ -505,6 +585,7 @@ static hg_return_t rpc_srv_read_data(hg_handle_t handle) {
     ret = rpc_cleanup_respond(&handle, &in, &out, &bulk_handle);
     // free tasks after responding
     cancel_abt_io(&abt_tasks, &task_eventuals, in.chunk_n);
+
     return ret;
 }
 
@@ -568,3 +649,26 @@ static hg_return_t rpc_srv_chunk_stat(hg_handle_t handle) {
 DEFINE_MARGO_RPC_HANDLER(rpc_srv_chunk_stat)
 
 
+void agios_callback(void* id) {
+    unsigned long long int request_id = *(unsigned long long int*) id;
+
+    ADAFS_DATA->spdlogger()->debug("{}() request {} is ready", __func__, request_id);
+
+    pthread_mutex_lock(&eventual_requests_lock);
+    ABT_eventual_set(eventual_requests[request_id], &request_id, sizeof(unsigned long long int));
+    eventual_requests.erase(request_id);
+    pthread_mutex_unlock(&eventual_requests_lock);
+}
+
+void agios_callback_aggregated(void **ids, int total) {
+    for (int i=0; i<total; i++) {
+        unsigned long long int request_id = *(unsigned long long int*) ids[i];
+
+        ADAFS_DATA->spdlogger()->debug("{}() request [{}/{}] {} is ready", __func__, i+1, total, request_id);
+
+        pthread_mutex_lock(&eventual_requests_lock);
+        ABT_eventual_set(eventual_requests[request_id], &request_id, sizeof(unsigned long long int));
+        eventual_requests.erase(request_id);
+        pthread_mutex_unlock(&eventual_requests_lock);
+    }
+}
