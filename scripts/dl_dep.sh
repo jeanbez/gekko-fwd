@@ -198,6 +198,8 @@ clonedeps "margo" "https://xgitlab.cels.anl.gov/sds/margo.git" "6ed94e4f3a4d526b
 wgetdeps "rocksdb" "https://github.com/facebook/rocksdb/archive/v6.2.2.tar.gz" &
 # get syscall_intercept
 clonedeps "syscall_intercept" "https://github.com/pmem/syscall_intercept.git" "cc3412a2ad39f2e26cc307d5b155232811d7408e" &
+# get ligconfig
+clonedeps "libconfig" "https://github.com/hyperrealm/libconfig.git" &
 # get AGIOS
 clonedeps "agios" "https://gitlab.com/jeanbez/agios.git" &
 
