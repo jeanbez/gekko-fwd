@@ -211,6 +211,9 @@ if [ "$NA_LAYER" == "ofi" ] || [ "$NA_LAYER" == "all" ]; then
         [ "${PERFORM_TEST}" ] && make check
     fi
 fi
+echo "############################################################ Installing:  LibConfig"
+
+yum -y -q install libconfig-devel
 
 echo "############################################################ Installing:  AGIOS"
 

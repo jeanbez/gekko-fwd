@@ -206,4 +206,4 @@ wait
 
 # get ligconfig
 #clonedeps "libconfig" "https://github.com/hyperrealm/libconfig.git" &
-yum -y -q install libconfig-devel
+
