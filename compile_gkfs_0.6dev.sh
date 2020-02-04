@@ -32,7 +32,7 @@ mkdir -p ${BUILD_PATH:?} && cd ${BUILD_PATH:?}
 #export CXX=/opt/ohpc/pub/compiler/gcc/8.3.0/bin/g++
 #export CC=/opt/ohpc/pub/compiler/gcc/8.3.0/bin/gcc
 
-cmake \
+cmake3 \
     -Wdev \
     -Wdeprecated \
     -DCMAKE_PREFIX_PATH:STRING="${DEPS_PATH:?};${CMAKE_PREFIX_PATH}" \
