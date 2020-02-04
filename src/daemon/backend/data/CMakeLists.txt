@@ -15,12 +15,6 @@ target_link_libraries(storage
     ${ABT_LIBRARIES}
     )
 
-target_link_libraries(storage
-    PRIVATE
-    ${LIBS}
-    agios
-    )
-
 target_include_directories(storage
     PRIVATE
     ${ABT_INCLUDE_DIRS}

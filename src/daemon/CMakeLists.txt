@@ -37,6 +37,7 @@ target_link_libraries(gkfs_daemon
     log_util
     env_util
     spdlog
+    agios
     # margo libs
     ${ABT_LIBRARIES}
     mercury
