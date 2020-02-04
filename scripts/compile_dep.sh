@@ -218,8 +218,6 @@ echo "############################################################ Installing:  
 CURR=${SOURCE}/agios
 prepare_build_dir ${CURR}
 cd ${CURR}
-sed -i 's/\/usr\/lib\/x86_64-linux-gnu\/libconfig.so/\/usr\/lib64\/libconfig.so/g' Makefile
-sed -i 's/sudo//g' Makefile
 make clean
 make library
 
