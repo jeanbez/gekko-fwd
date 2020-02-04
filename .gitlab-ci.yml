@@ -46,7 +46,7 @@ compile GekkoFS:
     - "compile dependencies"
   script:
     - mkdir -p ${BUILD_PATH} && cd ${BUILD_PATH}
-    - cmake3
+    - cmake
       -Wdev
       -Wdeprecate
       -DCMAKE_BUILD_TYPE=Debug
@@ -64,7 +64,7 @@ compile tests:
     - "compile dependencies"
   script:
     - mkdir -p ${TESTS_BUILD_PATH} && cd ${TESTS_BUILD_PATH}
-    - cmake3 -DCMAKE_BUILD_TYPE=Debug ..
+    - cmake -DCMAKE_BUILD_TYPE=Debug ..
     - make -j$(nproc)
   artifacts:
     paths:
