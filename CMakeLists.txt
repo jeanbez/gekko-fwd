@@ -74,6 +74,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS 0)
 # Rocksdb dependencies
 find_package(LZ4 REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(AGIOS REQUIRED)
 find_package(BZip2 REQUIRED)
 find_package(Snappy REQUIRED)
 find_package(ZStd REQUIRED)

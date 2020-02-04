@@ -37,7 +37,7 @@ target_link_libraries(gkfs_daemon
     log_util
     env_util
     spdlog
-    agios
+    ${AGIOS_LIBRARIES}
     # margo libs
     ${ABT_LIBRARIES}
     mercury
@@ -51,6 +51,7 @@ target_link_libraries(gkfs_daemon
 
 target_include_directories(gkfs_daemon
     PRIVATE
+    ${AGIOS_INCLUDE_DIRS}
     ${ABT_INCLUDE_DIRS}
     ${MARGO_INCLUDE_DIRS}
     )
