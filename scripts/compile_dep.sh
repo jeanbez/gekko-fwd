@@ -225,9 +225,10 @@ make library
 
 #AGIOS does not have a prefix to install, so temporarily, instead of modifying it change here
 #make library_install
-cp ./libagios.so ${INSTALL}/lib
+cp ./libagios.so.1 ${INSTALL}/lib
 cp agios.h ${INSTALL}/include/agios.h
-chmod 0755 ${INSTALL}/lib/libagios.so
+chmod 0755 ${INSTALL}/lib/libagios.so.1
+ln -s ${INSTALL}/lib/libagios.so.1 ${INSTALL}/lib/libagios.so
 
 echo "############################################################ Installing:  Mercury"
 
