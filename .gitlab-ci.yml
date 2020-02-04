@@ -74,6 +74,7 @@ test wr:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -86,6 +87,7 @@ test directories:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -98,6 +100,7 @@ test truncate:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -110,6 +113,7 @@ test path resolution:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
@@ -122,6 +126,7 @@ test lseek:
   stage: test
   script:
     - mkdir -p "${LOG_PATH}"
+    - cp agios/* /tmp
     - echo "`hostname` 0" > gkfs_forwarding.map
     - ${INSTALL_PATH}/bin/gkfs_daemon --mount /tmp/mountdir --root /tmp/root &
     - sleep 4
