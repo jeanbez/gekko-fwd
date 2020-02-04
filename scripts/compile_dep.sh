@@ -222,7 +222,12 @@ sed -i 's/\/usr\/lib\/x86_64-linux-gnu\/libconfig.so/\/usr\/lib64\/libconfig.so/
 sed -i 's/sudo//g' Makefile
 make clean
 make library
-make library_install
+
+#AGIOS does not have a prefix to install, so temporarily, instead of modifying it change here
+#make library_install
+cp ./libagios.so ${INSTALL}/lib
+cp agios.h ${INSTALL}/include/agios.h
+chmod 0755 ${INSTALL}/lib/libagios.so
 
 echo "############################################################ Installing:  Mercury"
 

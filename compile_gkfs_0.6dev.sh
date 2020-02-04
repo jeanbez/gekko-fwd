@@ -11,8 +11,11 @@ SRC=${GKFS_MN_SRC}/..
 #module load gnu8
 #export CC=/opt/ohpc/pub/compiler/gcc/8.3.0/bin/gcc
 #export CXX=/opt/ohpc/pub/compiler/gcc/8.3.0/bin/g++
-export CC="ccache gcc"
-export CXX="ccache g++"
+#export CC="ccache gcc"
+#export CXX="ccache g++"
+export CC="gcc"
+export CXX="g++"
+export CMAKE="cmake"
 
 #module load libfabric/1.8.0
 #export LD_LIBRARY_PATH=/home/software/libfabric/1.8.0/lib:/home/software/psm2/11.2.77/usr/lib64:$LD_LIBRARY_PATH
@@ -32,7 +35,7 @@ mkdir -p ${BUILD_PATH:?} && cd ${BUILD_PATH:?}
 #export CXX=/opt/ohpc/pub/compiler/gcc/8.3.0/bin/g++
 #export CC=/opt/ohpc/pub/compiler/gcc/8.3.0/bin/gcc
 
-cmake3 \
+${CMAKE} \
     -Wdev \
     -Wdeprecated \
     -DCMAKE_PREFIX_PATH:STRING="${DEPS_PATH:?};${CMAKE_PREFIX_PATH}" \
